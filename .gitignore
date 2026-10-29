@@ -34,3 +34,7 @@ RemoteSystemsTempFiles/
 # Java
 *.class
 .gradle
+
+# Fichiers d’assistant IA (locaux)
+CLAUDE.md
+.claude/
