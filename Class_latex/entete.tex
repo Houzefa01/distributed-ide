@@ -1,0 +1,137 @@
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[frenchb]{babel}
+\usepackage[french]{minitoc}
+\usepackage{hyperref}
+\usepackage{titletoc}
+%\usepackage{lmodern} % Pour changer le pack de police
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{makeidx}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{xcolor}
+\usepackage{pgf,tikz}
+\usepackage{setspace}
+\usepackage{soul}
+%\usepackage{ulem}
+%\usepackage{lmodern}
+\usepackage{apalike}
+%\usepackage{fourier}
+%\usepackage[scaled=2]{helvet}
+\usepackage{courier}
+%\usepackage{eurosym}
+%\usepackage{bookman}
+
+%\usepackage{charter}
+
+%\usepackage{newcent}
+%\usepackage{mathpazo}
+
+\usepackage{mathptmx}
+\usepackage{url}
+\usepackage{verbatim}
+\usepackage{moreverb}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{wrapfig}
+\usepackage{colortbl}
+\usepackage{wasysym}
+\usepackage{lastpage}
+\usepackage{listings}
+%\usepackage{glossaries}
+%\makeglossaries
+\usepackage[top=2cm,left=2cm,right=2cm,bottom=3cm]{geometry}
+\hypersetup{colorlinks,%
+    linkcolor=black,
+    %citecolor=green,%vert1,%
+    urlcolor=cyan,%
+}
+%\usepackage[linesnumbered, french]{algorithm2e}
+%\usepackage{fp}
+%%\usepackage{pstricks-add}
+%\RestyleAlgo{algoruled}
+%\SetKwInput{donne}{Données}
+%\SetKwInput{res}{Résultat}
+%\SetKw{ret}{Retourner}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\renewcommand{\algorithmicrequire}{\textbf{Données:}}
+\renewcommand{\algorithmicensure}{\textbf{Résultat:}}
+\renewcommand{\algorithmicwhile}{\textbf{Tant que}}
+\renewcommand{\algorithmicdo}{\textbf{Faire}}
+\renewcommand{\algorithmicendwhile}{\textbf{Fin Tant que}}
+\renewcommand{\algorithmicend}{\textbf{Fin}}
+\renewcommand{\algorithmicif}{\textbf{Si}}
+\renewcommand{\algorithmicendif}{\textbf{Fin du si}}
+\renewcommand{\algorithmicelse}{\textbf{Sinon}}
+\renewcommand{\algorithmicelsif}{\textbf{fin du sinon}}
+\renewcommand{\algorithmicthen}{\textbf{alors}}
+\renewcommand{\algorithmicfor}{\textbf{Pour}}
+\renewcommand{\algorithmicforall}{\textbf{pour tout}}
+\renewcommand{\algorithmicto}{\textbf{à}}
+\renewcommand{\algorithmicendfor}{\textbf{Fin Pour}}
+\renewcommand{\algorithmicdo}{\textbf{faire}}
+\renewcommand{\algorithmicloop}{\textbf{boucler}}
+\renewcommand{\algorithmicendloop}{\textbf{fin de la boucle}}
+\renewcommand{\algorithmicrepeat}{\textbf{répéter}}
+\renewcommand{\algorithmicuntil}{\textbf{jusqu’à}}
+\renewcommand{\algorithmicprint}{\textbf{afficher}}
+\newtheorem{theoreme}{Théorème}[section]
+\newtheorem{theoremes}{Théorèmes}[section]
+\newtheorem{TheoremeDefinition}{Théorème et Définition}[section]
+\newtheorem{definition}{Définition}[section]
+\newtheorem{definitions}{Définitions}[section]
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{propostions}{Propositions}[section]
+\newtheorem{corollaire}{Corollaire}[section]
+\newtheorem{corollaires}{Corollaires}[section]
+\newtheorem{lemme}{Lemme}[section]
+\newtheorem{lemmes}{Lemmes}[section]
+\newtheorem{remarque}{Remarque}[section]
+\newtheorem{exemple}{Exemple}[section]
+\newtheorem{formulemoyenne}{Formule de la moyenne}
+\newtheorem*{formulmoydiscr}{caption}
+\newcommand{\R}{ \mathbb{R} }
+\lstset{
+	literate=
+	{á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+	{Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+	{à}{{\`a}}1 {è}{{\`e}}1 {ì}{{\`i}}1 {ò}{{\`o}}1 {ù}{{\`u}}1
+	{À}{{\`A}}1 {È}{{\'E}}1 {Ì}{{\`I}}1 {Ò}{{\`O}}1 {Ù}{{\`U}}1
+	{ä}{{\"a}}1 {ë}{{\"e}}1 {ï}{{\"i}}1 {ö}{{\"o}}1 {ü}{{\"u}}1
+	{Ä}{{\"A}}1 {Ë}{{\"E}}1 {Ï}{{\"I}}1 {Ö}{{\"O}}1 {Ü}{{\"U}}1
+	{â}{{\^a}}1 {ê}{{\^e}}1 {î}{{\^i}}1 {ô}{{\^o}}1 {û}{{\^u}}1
+	{Â}{{\^A}}1 {Ê}{{\^E}}1 {Î}{{\^I}}1 {Ô}{{\^O}}1 {Û}{{\^U}}1
+	{œ}{{\oe}}1 {Œ}{{\OE}}1 {æ}{{\ae}}1 {Æ}{{\AE}}1 {ß}{{\ss}}1
+	{ű}{{\H{u}}}1 {Ű}{{\H{U}}}1 {ő}{{\H{o}}}1 {Ő}{{\H{O}}}1
+	{ç}{{\c c}}1 {Ç}{{\c C}}1 {ø}{{\o}}1 {å}{{\r a}}1 {Å}{{\r A}}1
+	{€}{{\EUR}}1 {£}{{\pounds}}1
+}
+\lstdefinestyle{stylepython}{
+	language=Python,
+	basicstyle=\ttfamily,
+	commentstyle=\color{green},
+	keywordstyle=\color{violet},
+	stringstyle=\color{olive},
+	numberstyle=\tiny,
+	numbers=left,
+	stepnumber=1,
+	numbersep=5pt,
+	linewidth =18cm, 
+	xleftmargin =2cm, 
+	aboveskip =5mm, 
+	belowskip =1cm,
+    float =!h,
+    frame =tBlR,
+%    rulesep =1mm,
+%    framesep =5mm,
+    %framerule=2pt,
+    xrightmargin=5mm,
+    xleftmargin=5mm,
+     rulecolor={\color[gray]{0.6}},rulesepcolor={\color[gray]{0.9}}
+}
+\newcommand{\N}{ \mathbb{N} }
+\newcommand{\abC}{$\mathcal{C}^{0}([a,b])$}

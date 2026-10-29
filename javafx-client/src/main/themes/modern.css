@@ -1,0 +1,174 @@
+/* modern.css - A modern, dark, VSCode-inspired theme */
+
+.root {
+    -fx-base: #1e1e1e;
+    -fx-background-color: #1e1e1e;
+    -fx-control-inner-background: #1e1e1e;
+    -fx-font-family: "Fira Code", "Consolas", "Monaco", "monospace";
+    -fx-font-size: 13px;
+    -fx-text-fill: #d4d4d4;
+}
+
+.menu-bar {
+    -fx-background-color: #333333;
+}
+
+.menu-bar .label {
+    -fx-text-fill: #d4d4d4;
+}
+
+.menu:hover, .menu:showing {
+    -fx-background-color: #444444;
+}
+
+.menu-item:focused {
+    -fx-background-color: #007acc;
+}
+
+.split-pane {
+    -fx-background-color: #1e1e1e;
+}
+
+.split-pane-divider {
+    -fx-background-color: #333333;
+    -fx-padding: 0 1 0 1;
+}
+
+.activity-bar {
+    -fx-background-color: #333333;
+    -fx-padding: 5;
+}
+
+.activity-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #d4d4d4;
+    -fx-border-color: transparent;
+    -fx-font-size: 18px;
+}
+
+.activity-btn:selected {
+    -fx-text-fill: #007acc;
+}
+
+.sidebar-panel {
+    -fx-background-color: #252526;
+    -fx-border-color: #333333;
+    -fx-border-width: 0 1 0 0;
+}
+
+.sidebar-header {
+    -fx-background-color: #333333;
+    -fx-padding: 5 10 5 10;
+    -fx-font-weight: bold;
+}
+
+.tree-view {
+    -fx-background-color: #252526;
+}
+
+.tree-cell {
+    -fx-text-fill: #d4d4d4;
+    -fx-padding: 3 5 3 5;
+}
+
+.tree-cell:filled:hover, .tree-cell:filled:selected {
+    -fx-background-color: #007acc;
+    -fx-text-fill: white;
+}
+
+.tab-pane .tab-header-area {
+    -fx-background-color: #252526;
+    -fx-padding: 0;
+}
+
+.tab-pane .tab {
+    -fx-background-color: #2d2d2d;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.tab-pane .tab:selected {
+    -fx-background-color: #1e1e1e;
+}
+
+.tab-pane .tab .tab-label {
+    -fx-text-fill: #d4d4d4;
+}
+
+.tab-pane .tab:selected .tab-label {
+    -fx-text-fill: white;
+}
+
+/* Tab modification indicator (dirty state) */
+.tab-dirty { -fx-background-color: #3f3f46; -fx-border-width: 0 0 2 0; -fx-border-color: #fbbf24; }
+.tab-dirty .tab-label { -fx-font-weight: bold; -fx-text-fill: #fbbf24; }
+.tab-dirty:selected { -fx-background-color: #1e1e1e; -fx-border-color: #fbbf24 transparent transparent transparent; -fx-border-width: 2 1 2 0; }
+.tab-dirty:selected .tab-label { -fx-text-fill: #fbbf24; }
+
+.tab-close-button { 
+    -fx-background-color: transparent;
+    -fx-text-fill: transparent;
+    -fx-font-size: 12px;
+    -fx-padding: 0;
+    -fx-border-width: 0;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.tab-close-button:hover {
+    -fx-text-fill: transparent;
+    -fx-background-color: transparent;
+}
+
+.status-bar {
+    -fx-background-color: #007acc;
+    -fx-padding: 3 5 3 5;
+}
+
+.status-bar .label {
+    -fx-text-fill: white;
+}
+
+.status-bar-item {
+    -fx-padding: 0 5 0 5;
+    -fx-cursor: hand;
+}
+
+.status-bar-item:hover {
+    -fx-background-color: #005a9e;
+}
+
+.status-bar-item-box {
+    -fx-padding: 0 5 0 5;
+    -fx-cursor: hand;
+    -fx-spacing: 5;
+}
+
+.status-bar-item-box:hover {
+    -fx-background-color: #005a9e;
+}
+
+.icon {
+    -fx-font-family: "codicons";
+    -fx-font-size: 14px;
+}
+
+.icon-plug:before { -fx-content: "\EA93"; }
+.icon-git-branch:before { -fx-content: "\EAB1"; }
+.icon-code:before { -fx-content: "\EA96"; }
+
+.connection-dot {
+    -fx-font-size: 18px;
+}
+
+.connection-dot.connected { -fx-text-fill: #89d185; }
+.connection-dot.connecting { -fx-text-fill: #f0c674; }
+.connection-dot.disconnected { -fx-text-fill: #f44336; }
+.connection-dot.error { -fx-text-fill: #f44336; }
+
+/* Status notification (auto-fade) */
+.status-notification { -fx-text-fill: #007bff; -fx-font-weight: bold; }
+.status-notification-saving { -fx-text-fill: #f0c674; -fx-font-weight: bold; }
+.status-notification-error { -fx-text-fill: #f44336; -fx-font-weight: bold; }
+.spinner { -fx-animation: spin 1.5s linear infinite; }
+@keyframes spin { 0% { -fx-rotate: 0deg; } 100% { -fx-rotate: 360deg; } }

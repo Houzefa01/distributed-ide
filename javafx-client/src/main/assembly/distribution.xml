@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.1.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.1.0 http://maven.apache.org/xsd/assembly-2.1.0.xsd">
+    
+    <id>distribution</id>
+    <formats>
+        <format>tar.gz</format>
+        <format>zip</format>
+    </formats>
+
+    <includeBaseDirectory>true</includeBaseDirectory>
+
+    <!-- Include the main JAR -->
+    <files>
+        <file>
+            <source>${project.build.directory}/${project.build.finalName}.jar</source>
+            <destName>distributed-ide.jar</destName>
+            <outputDirectory>/</outputDirectory>
+            <fileMode>0755</fileMode>
+        </file>
+        
+        <!-- Documentation files from root -->
+        <file>
+            <source>${project.parent.basedir}/README.md</source>
+            <destName>README.md</destName>
+            <outputDirectory>/</outputDirectory>
+        </file>
+        <file>
+            <source>${project.parent.basedir}/ARCHITECTURE.md</source>
+            <destName>ARCHITECTURE.md</destName>
+            <outputDirectory>/</outputDirectory>
+        </file>
+    </files>
+
+    <!-- Include launcher scripts from root/start -->
+    <fileSets>
+        <fileSet>
+            <directory>${project.parent.basedir}/start</directory>
+            <outputDirectory>start</outputDirectory>
+            <includes>
+                <include>run.sh</include>
+                <include>run.bat</include>
+            </includes>
+            <fileMode>0755</fileMode>
+        </fileSet>
+        
+        <!-- Create empty directories -->
+        <fileSet>
+            <outputDirectory>start/logs</outputDirectory>
+            <excludes>
+                <exclude>**/*</exclude>
+            </excludes>
+        </fileSet>
+        <fileSet>
+            <outputDirectory>start/config</outputDirectory>
+            <excludes>
+                <exclude>**/*</exclude>
+            </excludes>
+        </fileSet>
+    </fileSets>
+
+    <!-- Include all dependencies in lib directory -->
+    <dependencySets>
+        <dependencySet>
+            <outputDirectory>start/lib</outputDirectory>
+            <scope>runtime</scope>
+            <useProjectArtifact>false</useProjectArtifact>
+            <useTransitiveDependencies>true</useTransitiveDependencies>
+            <excludes>
+                <exclude>junit:junit</exclude>
+                <exclude>org.junit*:*</exclude>
+                <exclude>*:*:*:*:test</exclude>
+            </excludes>
+        </dependencySet>
+    </dependencySets>
+</assembly>

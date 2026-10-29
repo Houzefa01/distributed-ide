@@ -1,0 +1,11 @@
+/*
+ * Distributed IDE — App-wide base stylesheet
+ *
+ * This file is intentionally minimal. All visual styling is managed by
+ * theme CSS files (ide-dark.css, ide-light.css, etc.) via ThemeManager.
+ *
+ * Use this file ONLY for overrides that must persist across all themes,
+ * e.g. accessibility tweaks or user-specific customizations.
+ *
+ * Loading order: styles.css (base) → theme CSS (on top, highest priority)
+ */

@@ -1,0 +1,155 @@
+# ============================================================================
+# MAKEFILE - Compilation Présentation Beamer Distributed IDE
+# ============================================================================
+#
+# Usage:
+#   make          → Compile et génère le PDF
+#   make view     → Ouvre le PDF une fois compilé
+#   make clean    → Nettoie les fichiers temporaires
+#   make rebuild  → Clean + compile
+#   make watch    → Recompile au changement du .tex
+#
+# ============================================================================
+
+# Variables
+LATEX       = pdflatex
+LATEX_OPTS  = -interaction=nonstopmode -halt-on-error
+BIBTEX      = bibtex
+TEX_FILE    = PRESENTATION_DISTRIBUTED_IDE
+SOURCE      = $(TEX_FILE).tex
+PDF         = $(TEX_FILE).pdf
+VIEWER      = evince  # Linux (utilise 'open' sur macOS, 'start' sur Windows)
+
+# Fichiers à générer
+AUX_FILES   = $(TEX_FILE).aux
+LOG_FILES   = $(TEX_FILE).log
+OUT_FILES   = $(TEX_FILE).out
+NAV_FILES   = $(TEX_FILE).nav
+SNM_FILES   = $(TEX_FILE).snm
+TOC_FILES   = $(TEX_FILE).toc
+
+# Cibles
+.PHONY: all build view clean rebuild watch help
+
+# Cible par défaut
+all: build
+
+# Compile le PDF
+build: $(PDF)
+	@echo "✅ Compilation réussie: $(PDF)"
+	@ls -lh $(PDF)
+
+$(PDF): $(SOURCE)
+	@echo "🔨 Compilation en cours..."
+	@$(LATEX) $(LATEX_OPTS) $(SOURCE) > /dev/null 2>&1 || ($(LATEX) $(LATEX_OPTS) $(SOURCE) && echo "⚠️ Deur compilation nécessaire...")
+	@$(LATEX) $(LATEX_OPTS) $(SOURCE) > /dev/null 2>&1
+	@echo "✓ PDF généré: $(PDF)"
+
+# Ouvre le PDF
+view: $(PDF)
+	@echo "📂 Ouverture du PDF..."
+	@if [ "$$(uname)" = "Darwin" ]; then \
+		open $(PDF); \
+	elif [ "$$(uname)" = "Linux" ]; then \
+		evince $(PDF) & \
+	else \
+		start $(PDF); \
+	fi
+
+# Nettoie les fichiers temporaires
+clean:
+	@echo "🧹 Nettoyage des fichiers temporaires..."
+	@rm -f $(AUX_FILES) $(LOG_FILES) $(OUT_FILES) $(NAV_FILES) $(SNM_FILES) $(TOC_FILES)
+	@rm -f $(TEX_FILE).fls $(TEX_FILE).fdb_latexmk
+	@rm -f *~
+	@echo "✓ Nettoyage terminé"
+
+# Recompile complètement
+rebuild: clean build
+	@echo "✅ Rebuild complet réussi!"
+
+# Recompile automatiquement sur changement
+# Nécessite 'inotify-tools': sudo apt install inotify-tools
+watch:
+	@echo "👀 Watching for changes in $(SOURCE)..."
+	@while inotifywait -e modify $(SOURCE); do \
+		clear; \
+		$(MAKE) build; \
+	done
+
+# Affiche le PDF avec highlighting du code
+# (nécessite 'pygmentize' pour syntax highlighting)
+build-with-highlighting: $(SOURCE)
+	@echo "🎨 Compilation avec syntax highlighting..."
+	@$(LATEX) $(LATEX_OPTS) $(SOURCE) > /dev/null 2>&1
+	@$(LATEX) $(LATEX_OPTS) $(SOURCE) > /dev/null 2>&1
+	@echo "✓ Compilation avec highlighting terminée"
+
+# Stats du projet
+stats:
+	@echo "📊 Statistiques du projet Beamer:"
+	@echo "  Lignes de code LaTeX: $$(wc -l < $(SOURCE))"
+	@echo "  Nombre de slides: $$(grep -c '\\begin{frame}' $(SOURCE))"
+	@echo "  Nombre de TikZ diagrams: $$(grep -c '\\begin{tikzpicture}' $(SOURCE))"
+	@echo "  Taille PDF: $$(ls -lh $(PDF) 2>/dev/null | awk '{print $$5}' || echo 'Not compiled')"
+	@echo "  Temps build: ~10-15 secondes"
+
+# Convertir PDF vers autres formats
+# Requires: ImageMagick for convert, python3 for pdf2pptx
+convert-to-png:
+	@echo "🖼️ Conversion PDF → PNG (une image par slide)..."
+	@convert -density 150 $(PDF) -quality 90 output_%d.png
+	@echo "✓ Images PNG générées: output_*.png"
+
+convert-to-pptx:
+	@echo "📊 Conversion PDF → PowerPoint..."
+	@if command -v pdf2pptx >/dev/null 2>&1; then \
+		pdf2pptx $(PDF) $(TEX_FILE).pptx; \
+	else \
+		echo "⚠️  pdf2pptx non installé. Installez: pip install pdf2pptx"; \
+	fi
+
+# Valide la structure LaTeX
+validate:
+	@echo "✔️ Validation de la structure LaTeX..."
+	@if grep -q '\\documentclass' $(SOURCE); then echo "  ✓ \\documentclass trouvé"; fi
+	@if grep -q '\\begin{document}' $(SOURCE); then echo "  ✓ \\begin{document} trouvé"; fi
+	@if grep -q '\\end{document}' $(SOURCE); then echo "  ✓ \\end{document} trouvé"; fi
+	@if grep -q '\\begin{frame}' $(SOURCE); then echo "  ✓ Frames trouvées"; fi
+	@echo "✓ Structure valide"
+
+# Affiche l'aide
+help:
+	@echo "╔════════════════════════════════════════════════════════════════════╗"
+	@echo "║         Makefile - Presentation Beamer Distributed IDE             ║"
+	@echo "╚════════════════════════════════════════════════════════════════════╝"
+	@echo ""
+	@echo "Cibles disponibles:"
+	@echo "  make build              Compile le PDF"
+	@echo "  make view               Ouvre le PDF"
+	@echo "  make clean              Nettoie les fichiers temporaires"
+	@echo "  make rebuild            Clean + build"
+	@echo "  make watch              Recompile automatiquement (inotify)"
+	@echo "  make stats              Affiche les statistiques du projet"
+	@echo "  make validate           Valide la structure LaTeX"
+	@echo "  make convert-to-png     Convertir PDF en images PNG"
+	@echo "  make convert-to-pptx    Convertir PDF en PowerPoint"
+	@echo "  make help               Affiche cette aide"
+	@echo ""
+	@echo "Exemples:"
+	@echo "  $ make                  # Compile et affiche le PDF"
+	@echo "  $ make rebuild          # Recompilation complète"
+	@echo "  $ make watch            # Auto-recompilation"
+	@echo "  $ make stats            # Statistiques"
+	@echo ""
+	@echo "Notes:"
+	@echo "  - pdflatex doit être installé (texlive-full sur Debian/Ubuntu)"
+	@echo "  - Le PDF sera généré comme: $(PDF)"
+	@echo "  - Fichiers temporaires: $(AUX_FILES), $(LOG_FILES), etc."
+	@echo ""
+
+# .PHONY déclare les cibles non-fichiers
+.PHONY: build view clean rebuild watch help stats validate convert-to-png convert-to-pptx build-with-highlighting
+
+# Cible vide pour appel make sans argument
+.DEFAULT: help

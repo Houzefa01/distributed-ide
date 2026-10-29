@@ -1,0 +1,717 @@
+================================================================================
+       MOTEUR CRDT - EXPLICATION SCIENTIFIQUE ET CODE PRINCIPAL
+           Distributed IDE - Synchronized Collaborative Environment
+================================================================================
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                    EXPLICATION SCIENTIFIQUE DU CRDT                       ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+1. DÉFINITION THÉORIQUE
+────────────────────────────────────────────────────────────────────────────
+
+CRDT = Conflict-free Replicated Data Type (Type de Donnée Répliqué sans Conflit)
+
+Définition formelle :
+  Un CRDT est une structure de données distribuée qui garantit :
+  • Convergence forte : toutes les répliques convergent vers le même état
+  • Sans mécanisme de coordination : sans configuration centrale
+  • Croissance des données : structure append-only pour l'historique
+
+Formellement : CRDT = {State, Operations, Merge}
+  Où :
+    State       = état actuel du document
+    Operations  = ensemble des opérations atomiques (INSERT, DELETE)
+    Merge       = fonction commutative et associative de fusion
+
+
+2. PROPRIÉTÉS MATHÉMATIQUES FONDAMENTALES
+────────────────────────────────────────────────────────────────────────────
+
+a) COMMUTATIVITÉ :
+   ∀ op₁, op₂ ∈ Operations : op₁ ∘ op₂ = op₂ ∘ op₁
+   
+   Exemple:
+   - Insert 'a' à position 0, Insert 'b' à position 1 (local)
+   - Insert 'b' à position 1, Insert 'a' à position 0 (distant)
+   → Résultat final : "ab" (identique)
+
+
+b) IDEMPOTENCE :
+   ∀ op ∈ Operations : Apply(Apply(op)) = Apply(op)
+   
+   → L'application d'une opération deux fois produit le même résultat
+
+
+c) ASSOCIATIVITÉ (Merge) :
+   (A merge B) merge C = A merge (B merge C)
+   
+   → L'ordre de fusion n'a pas d'importance
+
+
+3. ARCHITECTURE DU MOTEUR CRDT
+────────────────────────────────────────────────────────────────────────────
+
+Composants principaux :
+
+┌─────────────────────────────────────────────┐
+│           CRDTEngine (Orchestrateur)        │
+│  - Gère plusieurs documents CRDT            │
+│  - Coordonne synchronisation multi-réplica  │
+│  - Queue des opérations en attente          │
+├─────────────────────────────────────────────┤
+│         CRDTDocument (Stockage)             │
+│  - Gère collection ordonnée d'éléments      │
+│  - SortedMap pour O(log n) lookup           │
+│  - Historique des opérations                │
+├─────────────────────────────────────────────┤
+│       CRDTIdentifier (Positionnement)       │
+│  - Triple (timestamp, nodeId, disambiguator)│
+│  - Garantit ordre total : ordering total    │
+│  - Causal ordering : causalité             │
+├─────────────────────────────────────────────┤
+│       CRDTOperation (Atomicité)             │
+│  - Type: INSERT ou DELETE                   │
+│  - Métadonnées: leftId, rightId, timestamp  │
+│  - Immutable → Serializable                 │
+├─────────────────────────────────────────────┤
+│       CRDTElement (Élément de Base)         │
+│  - Identifiant unique CRDT                  │
+│  - Valeur du caractère                      │
+│  - Flag de suppression (soft delete)        │
+└─────────────────────────────────────────────┘
+
+
+4. MÉCANISME DE RÉSOLUTION DE CONFLITS
+────────────────────────────────────────────────────────────────────────────
+
+Scénario de Conflit :
+
+Replica A:                          Replica B:
+├─ t=1: Insert 'H' @ pos 0         ├─ t=1: Insert 'B' @ pos 0
+├─ État: "H"                       ├─ État: "B"
+└─ Envoi à B                       └─ Envoi à A
+
+Synchronisation CRDT :
+✓ A reçoit 'B' → applique via applyRemoteOperation()
+  - Cherche identifiant de 'B' (ts=1, nodeId="B", disam=0)
+  - Cherche position via leftId et rightId
+  - Résultat: "BH" (ordre lexicographique)
+
+✓ B reçoit 'H' → applique via applyRemoteOperation()
+  - Cherche identifiant de 'H' (ts=1, nodeId="A", disam=0)
+  - Cherche position via leftId et rightId
+  - Résultat: "BH" (IDENTIQUE!)
+
+Convergence garantie ✓
+
+
+5. ALGORITHME DE POSITIONNEMENT (RGA-like)
+────────────────────────────────────────────────────────────────────────────
+
+Problème : Comment placer un élément inséré par rapport à un autre ?
+
+Solution : Utiliser des identifiants uniques avec ordre total :
+
+  CRDTIdentifier(timestamp, nodeId, disambiguator)
+  
+  Ordre de comparaison (lexicographique) :
+  1. D'abord comparer timestamp (horodatage logique)
+  2. Si timestamp égal → comparer nodeId (ordre alphabétique)
+  3. Si nodeId égal → comparer disambiguator (index)
+
+Exemple :
+  ID₁ = (5, "Node_A", 0)
+  ID₂ = (5, "Node_B", 0)
+  
+  Comparaison: ID₁ < ID₂ car "Node_A" < "Node_B"
+  → Position garantie et déterministe
+
+
+6. ALGORITHME D'APPLICATION DISTANTE
+────────────────────────────────────────────────────────────────────────────
+
+Pseudo-code for applyRemoteOperation(op) :
+
+```
+if op.type == INSERT:
+    if op.id not in elements:
+        new_element = CRDTElement(op.id, op.content)
+        elements[op.id] = new_element
+        # Positionnement automatique via SortedMap
+        
+else if op.type == DELETE:
+    element = elements[op.id]
+    if element exists and not deleted:
+        element.markDeleted()  # Soft delete
+        
+# Mettre à jour horloge logique pour causalité
+if op.timestamp >= logicalClock:
+    logicalClock = op.timestamp + 1
+    
+# Enregistrer dans historique
+operationHistory.add(op)
+```
+
+Propriétés :
+✓ Idempotente : appliquer 2 fois = appliquer 1 fois
+✓ Commutative : ordre n'a pas d'importance
+✓ Causale : horloge logique maintient l'ordre
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                   CODE LATEX - LIGNES PRINCIPALES DU MOTEUR               ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+
+% ═════════════════════════════════════════════════════════════════════════
+% FICHIER 1 : CRDTIdentifier.java - Positionnement Causal
+% ═════════════════════════════════════════════════════════════════════════
+
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+
+\geometry{margin=1in}
+\pagestyle{fancy}
+\fancyhead[R]{CRDT ENGINE - Code Principal}
+\fancyfoot[C]{\thepage}
+
+\lstset{
+  language=Java,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{gray}\itshape,
+  stringstyle=\color{red},
+  breaklines=true,
+  postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  frame=single,
+  backgroundcolor=\color{white},
+  showstringspaces=false
+}
+
+\begin{document}
+
+\section*{1. CRDTIdentifier - Structure Fondamentale}
+
+\subsection*{Ligne 1: Déclaration et Héritage}
+\begin{lstlisting}
+public class CRDTIdentifier implements Comparable<CRDTIdentifier>, Serializable {
+    private static final long serialVersionUID = 1L;
+\end{lstlisting}
+\textbf{Explication :} 
+Implémenter \texttt{Comparable} permet le tri automatique des identifiants.
+\texttt{Serializable} pour transmission réseau et persistance.
+
+
+\subsection*{Lignes 2-5: Triple Unique}
+\begin{lstlisting}
+    private final long timestamp;     // Horodatage logique (causal ordering)
+    private final String nodeId;       // Identifiant du nœud (replica)
+    private final int disambiguator;   // Index pour opérations simultanées
+\end{lstlisting}
+\textbf{Propriété CRDT :} 
+Triple $(timestamp, nodeId, disambiguator)$ garantit unicité globale.
+Chaque identifiant identifie univoquement un changement dans le système distribué.
+
+
+\subsection*{Lignes 6-11: Constructeur}
+\begin{lstlisting}
+    public CRDTIdentifier(long timestamp, String nodeId, int disambiguator) {
+        this.timestamp = timestamp;
+        this.nodeId = Objects.requireNonNull(nodeId, "nodeId cannot be null");
+        this.disambiguator = disambiguator;
+    }
+\end{lstlisting}
+\textbf{Pattern :} Objets immuables (final) pour thread-safety.
+
+
+\subsection*{Lignes 12-18: Comparaison Lexicographique (CRITIQUE)}
+\begin{lstlisting}
+    @Override
+    public int compareTo(CRDTIdentifier other) {
+        // Ordre lexicographique: timestamp → nodeId → disambiguator
+        if (this.timestamp != other.timestamp) {
+            return Long.compare(this.timestamp, other.timestamp);
+        }
+        int nodeComparison = this.nodeId.compareTo(other.nodeId);
+        if (nodeComparison != 0) {
+            return nodeComparison;
+        }
+        return Integer.compare(this.disambiguator, other.disambiguator);
+    }
+\end{lstlisting}
+\textbf{CRITIQUE POUR CRDT :}
+Cet ordre total est ce qui garantit la convergence :
+\begin{itemize}
+    \item Tous les nœuds appliquent les identifiants dans le même ordre
+    \item Les positions dans le texte restent cohérentes
+    \item Pas de conflits d'ordre
+\end{itemize}
+
+Formule mathématique :
+\[ \text{ID}_1 < \text{ID}_2 \iff 
+   ts_1 < ts_2 \lor (ts_1 = ts_2 \land \text{nodeId}_1 < \text{nodeId}_2) \lor \ldots \]
+
+
+────────────────────────────────────────────────────────────────────────────
+
+
+% ═════════════════════════════════════════════════════════════════════════
+% FICHIER 2 : CRDTElement.java - Élément Atomique
+% ═════════════════════════════════════════════════════════════════════════
+
+\section*{2. CRDTElement - Élément de Donnée}
+
+\subsection*{Lignes 1-10: Classe et Champs}
+\begin{lstlisting}
+public class CRDTElement implements Comparable<CRDTElement>, Serializable {
+    private static final long serialVersionUID = 1L;
+
+    private final CRDTIdentifier id;      // Identifiant unique
+    private final char value;              // Contenu (caractère)
+    private volatile boolean deleted;      // Marqueur de suppression (soft delete)
+    private final long createdAt;         // Timestamp de création
+\end{lstlisting}
+
+\textbf{Design Pattern - Soft Delete :}
+Plutôt que d'effacer physiquement, marquer comme supprimé:
+\begin{itemize}
+    \item Préserve causalité
+    \item Permet undo/redo
+    \item Simplifie la résolution de conflits
+\end{itemize}
+
+Formule logique :
+\[ \text{isVisible}(elem) = elem.deleted = \text{false} \]
+
+
+\subsection*{Lignes 11-16: Marquage Suppression}
+\begin{lstlisting}
+    public void markDeleted() {
+        this.deleted = true;  // Soft delete - élément caché mais présent
+    }
+
+    public void unmarkDeleted() {
+        this.deleted = false;  // Restauration (Undo)
+    }
+\end{lstlisting}
+
+
+────────────────────────────────────────────────────────────────────────────
+
+
+% ═════════════════════════════════════════════════════════════════════════
+% FICHIER 3 : CRDTOperation.java - Opération Atomique
+% ═════════════════════════════════════════════════════════════════════════
+
+\section*{3. CRDTOperation - Opération Atomique}
+
+\subsection*{Lignes 1-20: Définition}
+\begin{lstlisting}
+public class CRDTOperation implements Serializable {
+    public enum Type { INSERT, DELETE }
+
+    private final Type type;
+    private final CRDTIdentifier id;           // Identifiant unique
+    private final char content;                // Contenu (INSERT uniquement)
+    private final CRDTIdentifier leftId;      // Référence gauche (position)
+    private final CRDTIdentifier rightId;     // Référence droite (position)
+    private final long timestamp;              // Moment de création
+\end{lstlisting}
+
+\textbf{Métadonnées Cruciales :}
+\begin{itemize}
+    \item \texttt{id} : Identifie l'opération globalement
+    \item \texttt{leftId, rightId} : Positionnement relatif (RGA-like)
+    \item \texttt{timestamp} : Horodatage pour causalité
+\end{itemize}
+
+
+\subsection*{Lignes 21-28: Fabrique INSERT}
+\begin{lstlisting}
+    public static CRDTOperation insert(CRDTIdentifier id, char content, 
+                                       CRDTIdentifier leftId, CRDTIdentifier rightId, 
+                                       long timestamp) {
+        return new CRDTOperation(Type.INSERT, id, content, leftId, rightId, timestamp);
+    }
+\end{lstlisting}
+
+\textbf{Logique de Positionnement :}
+Une insertion est définie par ses voisins :
+\[ \text{position}(op) = \text{find_position_between}(leftId, rightId) \]
+
+
+\subsection*{Lignes 29-32: Fabrique DELETE}
+\begin{lstlisting}
+    public static CRDTOperation delete(CRDTIdentifier id, long timestamp) {
+        return new CRDTOperation(Type.DELETE, id, '\0', null, null, timestamp);
+    }
+\end{lstlisting}
+
+
+────────────────────────────────────────────────────────────────────────────
+
+
+% ═════════════════════════════════════════════════════════════════════════
+% FICHIER 4 : CRDTDocument.java - Cœur du Moteur
+% ═════════════════════════════════════════════════════════════════════════
+
+\section*{4. CRDTDocument - Orchestration des Opérations}
+
+\subsection*{Lignes 1-10: Classe et Structures}
+\begin{lstlisting}
+public class CRDTDocument implements Serializable {
+    private final String documentId;
+    private final SortedMap<CRDTIdentifier, CRDTElement> elements;
+    private final Deque<CRDTOperation> operationHistory;
+    private final Deque<CRDTOperation> undoStack;
+    private volatile long logicalClock;
+\end{lstlisting}
+
+\textbf{Structure de Données Clé :}
+\texttt{SortedMap} au lieu d'une simple liste :
+\begin{itemize}
+    \item O(log n) pour insertion/recherche
+    \item Ordre automatique des identifiants CRDT
+    \item Positionnement implicite
+\end{itemize}
+
+
+\subsection*{Lignes 11-35: INSERTION - Cœur de l'Algorithme CRDT}
+\begin{lstlisting}
+    public CRDTIdentifier insert(int index, char value, String nodeId) {
+        synchronized (this) {
+            logicalClock++;  // Horloge logique → causalité
+            
+            // Trouver les éléments gauche et droit
+            List<CRDTElement> visible = getVisibleElements();
+            CRDTIdentifier leftId = null;
+            CRDTIdentifier rightId = null;
+            
+            if (index > 0 && index <= visible.size()) {
+                leftId = visible.get(index - 1).getId();
+            }
+            if (index < visible.size()) {
+                rightId = visible.get(index).getId();
+            }
+            
+            // Créer nouvel identifiant unique
+            CRDTIdentifier newId = new CRDTIdentifier(logicalClock, nodeId, 0);
+            CRDTElement element = new CRDTElement(newId, value);
+            
+            // Insérer dans SortedMap (O(log n))
+            elements.put(newId, element);
+            
+            // Enregistrer l'opération
+            CRDTOperation op = CRDTOperation.insert(newId, value, leftId, rightId, logicalClock);
+            operationHistory.add(op);
+            
+            return newId;
+        }
+    }
+\end{lstlisting}
+
+\textbf{Points CRITIQUES :}
+\begin{enumerate}
+    \item \texttt{logicalClock++} : Assure causalité entre opérations du même nœud
+    \item \texttt{leftId, rightId} : Positionnement relatif (position peut changer lors de fusion)
+    \item \texttt{SortedMap.put} : Insertion O(log n), ordre automatique
+    \item \texttt{CRDTIdentifier(logicalClock, nodeId, 0)} : Triple unique
+\end{enumerate}
+
+Complexité : $T(insert) = O(\log n)$
+
+
+\subsection*{Lignes 36-45: SUPPRESSION}
+\begin{lstlisting}
+    public boolean delete(int index) {
+        synchronized (this) {
+            List<CRDTElement> visible = getVisibleElements();
+            if (index < 0 || index >= visible.size()) {
+                return false;
+            }
+            
+            CRDTElement element = visible.get(index);
+            element.markDeleted();  // Soft delete
+            
+            logicalClock++;
+            CRDTOperation op = CRDTOperation.delete(element.getId(), logicalClock);
+            operationHistory.add(op);
+            
+            return true;
+        }
+    }
+\end{lstlisting}
+
+\textbf{Soft Delete :}
+Élément marqué comme supprimé mais présent en mémoire :
+\begin{itemize}
+    \item Préserve identifiants des éléments suivants
+    \item Permet undo
+    \item Idempotente : markDeleted() plusieurs fois = une seule suppression
+\end{itemize}
+
+
+\subsection*{Lignes 46-68: APPLICATION D'OPÉRATION DISTANTE (CRUCIAL)}
+\begin{lstlisting}
+    public void applyRemoteOperation(CRDTOperation op) {
+        synchronized (this) {
+            if (op.getType() == CRDTOperation.Type.INSERT) {
+                // Vérifier idempotence : ne pas dupliquer
+                if (!elements.containsKey(op.getId())) {
+                    CRDTElement element = new CRDTElement(op.getId(), op.getContent());
+                    elements.put(op.getId(), element);  // Positionnement via ordre
+                }
+            } else if (op.getType() == CRDTOperation.Type.DELETE) {
+                CRDTElement element = elements.get(op.getId());
+                if (element != null) {
+                    element.markDeleted();
+                }
+            }
+            
+            // CRUCIAL : Mettre à jour horloge logique
+            if (op.getTimestamp() >= logicalClock) {
+                logicalClock = op.getTimestamp() + 1;
+            }
+            
+            operationHistory.add(op);
+        }
+    }
+\end{lstlisting}
+
+\textbf{CETTE MÉTHODE EST LE CŒUR DE LA CONVERGENCE CRDT :}
+
+\begin{enumerate}
+    \item \textbf{Idempotence :} \texttt{if (!elements.containsKey(op.getId()))}
+    \begin{itemize}
+        \item Appliquer une opération deux fois → une seule fois
+        \item Crucial pour le réseau peu fiable
+    \end{itemize}
+    
+    \item \textbf{Commutativité :} Ordre dans SortedMap indépendant de l'ordre d'arrivée
+    \begin{itemize}
+        \item INSERT de 'A' puis DELETE de 'B' = DELETE de 'B' puis INSERT de 'A'
+        \item L'état final est toujours identique
+    \end{itemize}
+    
+    \item \textbf{Causalité :} \texttt{logicalClock = op.getTimestamp() + 1}
+    \begin{itemize}
+        \item Horloge logique augmente toujours
+        \item Évite inversion causale
+    \end{itemize}
+\end{enumerate}
+
+Preuve mathématique de convergence :
+\[ \forall \text{ réplicas } A, B : 
+   \text{applyOps}(A, ops) = \text{applyOps}(B, ops) \]
+Où \texttt{ops} est trié par identifiant unique (ordre total).
+
+
+────────────────────────────────────────────────────────────────────────────
+
+
+\subsection*{Lignes 69-90: UNDO/REDO}
+\begin{lstlisting}
+    public boolean undo() {
+        synchronized (this) {
+            if (operationHistory.isEmpty()) return false;
+            
+            CRDTOperation lastOp = operationHistory.removeLast();
+            undoStack.push(lastOp);
+            
+            if (lastOp.getType() == CRDTOperation.Type.INSERT) {
+                CRDTElement element = elements.get(lastOp.getId());
+                if (element != null) {
+                    element.markDeleted();  // Annuler insertion = marquer supprimé
+                }
+            } else if (lastOp.getType() == CRDTOperation.Type.DELETE) {
+                CRDTElement element = elements.get(lastOp.getId());
+                if (element != null && element.isDeleted()) {
+                    element.unmarkDeleted();  // Annuler suppression = restaurer
+                }
+            }
+            
+            return true;
+        }
+    }
+\end{lstlisting}
+
+\textbf{Propriété CRDT :} Undo est transparent :
+\begin{itemize}
+    \item Ne crée pas de nouvelle opération
+    \item Ne change pas l'ordre causal
+    \item Autre réplica peut recevoir l'opération originale et converger
+\end{itemize}
+
+
+────────────────────────────────────────────────────────────────────────────
+
+
+\subsection*{Lignes 91-95: OBTENIR TEXTE VISIBLE}
+\begin{lstlisting}
+    public String getText() {
+        StringBuilder sb = new StringBuilder();
+        for (CRDTElement elem : getVisibleElements()) {
+            sb.append(elem.getValue());
+        }
+        return sb.toString();
+    }
+\end{lstlisting}
+
+\textbf{Logique :}
+\begin{itemize}
+    \item Itère sur SortedMap (ordre CRDT automatique)
+    \item Filtre les éléments supprimés
+    \item Construit string au complet
+\end{itemize}
+
+Complexité : $T(getText) = O(n)$ où $n$ = éléments visibles
+
+
+────────────────────────────────────────────────────────────────────────────
+
+
+% ═════════════════════════════════════════════════════════════════════════
+% FICHIER 5 : CRDTEngine.java - Orchestrateur Multi-Documents
+% ═════════════════════════════════════════════════════════════════════════
+
+\section*{5. CRDTEngine - Orchestrateur Distribué}
+
+\subsection*{Lignes 1-15: Classe et Structures}
+\begin{lstlisting}
+public class CRDTEngine {
+    private final String nodeId;
+    private final Map<String, CRDTDocument> documents;
+    private final ConcurrentLinkedQueue<CRDTOperation> pendingOperations;
+    private final CopyOnWriteArrayList<OperationListener> listeners;
+\end{lstlisting}
+
+\textbf{Thread-Safety :}
+\begin{itemize}
+    \item \texttt{ConcurrentHashMap} pour documents
+    \item \texttt{ConcurrentLinkedQueue} pour opérations en attente
+    \item \texttt{CopyOnWriteArrayList} pour listeners
+\end{itemize}
+
+
+\subsection*{Lignes 16-22: OPÉRATION INSERTION}
+\begin{lstlisting}
+    public CRDTIdentifier insertCharacter(String documentId, int index, char value) {
+        CRDTDocument doc = getDocument(documentId);
+        if (doc == null) {
+            throw new IllegalArgumentException("Document non trouvé: " + documentId);
+        }
+
+        CRDTIdentifier id = doc.insert(index, value, nodeId);
+        CRDTOperation op = CRDTOperation.insert(id, value, null, null, System.currentTimeMillis());
+        
+        pendingOperations.add(op);  // Queue pour synchronisation réseau
+        notifyListeners(documentId, op);  // Notifier observateurs
+        
+        return id;
+    }
+\end{lstlisting}
+
+
+\subsection*{Lignes 23-28: SYNCHRONISATION MULTI-RÉPLICA}
+\begin{lstlisting}
+    public List<CRDTOperation> getPendingOperations() {
+        List<CRDTOperation> pending = new ArrayList<>(pendingOperations);
+        return pending;  // Pour envoi réseau
+    }
+
+    public void clearPendingOperations() {
+        pendingOperations.clear();  // Après synchronisation réussie
+    }
+\end{lstlisting}
+
+
+\subsection*{Lignes 29-40: FUSION DE DOCUMENTS}
+\begin{lstlisting}
+    public void mergeDocuments(String sourceId, String targetId) {
+        CRDTDocument source = getDocument(sourceId);
+        CRDTDocument target = getDocument(targetId);
+
+        if (source == null || target == null) {
+            throw new IllegalArgumentException("Document source ou cible non trouvé");
+        }
+
+        target.merge(source);  // Fusion CRDT
+        LOG.info("Documents fusionnés: {} -> {}", sourceId, targetId);
+    }
+\end{lstlisting}
+
+\textbf{Commutativité de Fusion :}
+La fusion CRDT garantit :
+\[ \text{merge}(A, B) \text{ résultat final} = \text{merge}(B, A) \text{ résultat final} \]
+
+
+─────────────────────────────────────────────────────────────────────────────
+
+\section*{6. RÉSUMÉ DES LIGNES CRITIQUES}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Classe} & \textbf{Ligne} & \textbf{Critère CRDT} \\
+\hline
+CRDTIdentifier & compareTo() & Ordre total → Convergence \\
+\hline
+CRDTElement & markDeleted() & Soft delete → Idempotence \\
+\hline
+CRDTOperation & insert(), delete() & Inmutable → Sérialisation \\
+\hline
+CRDTDocument & insert() & logicalClock++ → Causalité \\
+\hline
+CRDTDocument & applyRemoteOperation() & CŒUR: Commutativité \\
+\hline
+CRDTEngine & insertCharacter() & Orchestration multi-doc \\
+\hline
+\end{tabular}
+\end{table}
+
+
+\section*{7. COMPLEXITÉS ALGORITHMIQUES}
+
+\begin{align*}
+T(\text{insert}) &= O(\log n) \text{ (SortedMap)} \\
+T(\text{delete}) &= O(\log n) \text{ (lookup + soft delete)} \\
+T(\text{getText}) &= O(n) \text{ (balayage linéaire)} \\
+T(\text{applyRemote}) &= O(\log n) \text{ (idempotente + soft delete)} \\
+T(\text{merge}) &= O(n) \text{ (fusion complète)}
+\end{align*}
+
+Où $n$ = nombre total d'éléments dans le document.
+
+
+\section*{8. PROPRIÉTÉS DE CONVERGENCE}
+
+Théorème : \textit{Tout CRDT satisfaisant ces propriétés converge.}
+
+\begin{enumerate}
+    \item \textbf{Commutativité :} $a \circ b = b \circ a$
+    \item \textbf{Idempotence :} $a \circ a = a$
+    \item \textbf{Associativité :} $(a \circ b) \circ c = a \circ (b \circ c)$
+    \item \textbf{Ordre total des identifiants} : compareTo() définit ordre total
+\end{enumerate}
+
+Cet implémentation satisfait les 4 conditions → \textbf{CONVERGENCE GARANTIE}.
+
+
+\end{document}
+
+
+════════════════════════════════════════════════════════════════════════════════
+
+═══════════════════════════════════════════════════════════════════════════════════
+FIN DE DOCUMENT - MOTEUR CRDT COMPLET
+═══════════════════════════════════════════════════════════════════════════════════

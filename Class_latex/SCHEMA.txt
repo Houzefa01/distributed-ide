@@ -1,0 +1,50 @@
+
+	
+	\begin{column}{3cm}\pause
+		\setbeamercolor{block body alerted}{fg=white,bg=red!70}
+		\begin{alertblock}{}					
+			\textbf{A- \underline{Contexte :}} 
+			Problèmes des urgences médicales à Antsiranana.
+		\end{alertblock}
+	\end{column}
+	\begin{column}{3cm}\pause
+		\begin{tikzpicture}
+		\draw[->,>=stealth,line width=1mm] (4,0) -- (7,0);
+		\end{tikzpicture}
+	\end{column}
+	\begin{column}{3cm}
+		\setbeamercolor{item}{fg=grisClair}
+		\begin{alertblock}{}
+			\textbf{B- \underline{Objectif :}}
+			Améliorer la réactivité des services avec un système \textbf{JAVA natif}.
+		\end{alertblock}
+	\end{column}
+\end{columns} 	
+\begin{columns}
+	\begin{column}{3cm}\pause
+		\begin{tikzpicture}
+		\draw[<-,>=stealth,line width=1mm] (2,5) -- (5,6);
+		\end{tikzpicture}
+	\end{column}
+\end{columns} 		
+\begin{columns}
+	\begin{column}{3cm}
+		\setbeamercolor{block body alerted}{fg=white,bg=red!70}
+		\begin{alertblock}{}
+			\textbf{\underline{Outile :}}
+			Améliorer la réactivité des services avec un système \textbf{JAVA natif}.
+		\end{alertblock}
+	\end{column}
+	\begin{column}{3cm}\pause
+		\begin{tikzpicture}
+		\draw[->,>=stealth,line width=1mm] (4,0) -- (7,0);
+		\end{tikzpicture}
+	\end{column}
+	\begin{column}{3cm}
+		\setbeamercolor{item}{fg=grisClair}
+		\begin{alertblock}{}
+			\textbf{\underline{Objectif :}}
+			Améliorer la réactivité des services avec un système \textbf{JAVA natif}.
+		\end{alertblock}
+	\end{column}
+\end{columns} 

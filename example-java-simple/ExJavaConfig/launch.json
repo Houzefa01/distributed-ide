@@ -1,0 +1,6 @@
+{
+  "mainClass": "com.example.Main",
+  "vmArgs": "-Xmx512m -Xms256m",
+  "programArgs": "arg1 arg2",
+  "classPathExtra": "./lib/*"
+}

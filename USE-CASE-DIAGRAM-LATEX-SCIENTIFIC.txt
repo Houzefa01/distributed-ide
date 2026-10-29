@@ -1,0 +1,478 @@
+================================================================================
+  DIAGRAMMES DE CAS D'UTILISATION - FORMALISATION DES INTERACTIONS
+              Distributed IDE - Analyse Scientifique
+================================================================================
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                         EXPLICATION SCIENTIFIQUE                          ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+1. DÉFINITION FORMELLE
+────────────────────────────────────────────────────────────────────────────
+
+Un diagramme de cas d'utilisation est une représentation graphique UML 
+(Unified Modeling Language) qui modélise les interactions entre :
+  • Les ACTEURS (entités externes : utilisateurs, systèmes)
+  • Le SYSTÈME (boîte noire avec frontière)
+  • Les CAS D'UTILISATION (fonctionnalités du système)
+
+Formellement : UC = {A, S, CU, R}
+  Où :
+    A  = ensemble des acteurs externes
+    S  = système modélisé
+    CU = ensemble des cas d'utilisation
+    R  = ensemble des relations (associations, inclusions, extensions)
+
+
+2. ÉLÉMENTS COMPOSANTS
+────────────────────────────────────────────────────────────────────────────
+
+a) ACTEURS : Entités externes qui interagissent avec le système
+   Types :
+   - Acteur primaire : initie l'interaction (ex: Developer)
+   - Acteur secondaire : reçoit les services (ex: Repository)
+   
+b) CAS D'UTILISATION : Descriptions de séquences d'interactions
+   Propriétés : {nom, description, acteurs, préconditions, postconditions}
+   
+c) RELATIONS :
+   - Association : lien direct acteur ↔ cas d'utilisation
+   - Inclusion : UC1 --include--> UC2 (UC2 toujours exécutée)
+   - Extension : UC1 --extend--> UC2 (UC2 optionnellement exécutée)
+   - Généralisation : UC1 est spécialisation de UC2
+
+
+3. MATHÉMATISATION
+────────────────────────────────────────────────────────────────────────────
+
+Pour Distributed IDE, nous définissons :
+
+Acteurs : A = {Developer, LSPServer, Terminal, WebRTC, Repository}
+
+Cas d'Utilisation : CU = {
+  WriteCode,
+  ExecuteTerminal,
+  SynchronizeCode,
+  ManageConnections,
+  BrowseRepository,
+  DebugCode,
+  ViewLSPSuggestions,
+  HandleConnections
+}
+
+Relations d'Inclusion :
+  include = {
+    WriteCode → ViewLSPSuggestions,
+    ExecuteTerminal → HandleConnections,
+    SynchronizeCode → BrowseRepository
+  }
+
+Relations d'Extension :
+  extend = {
+    WriteCode ⟿ DebugCode (optionnel),
+    SynchronizeCode ⟿ ManageConnections (conditionnel)
+  }
+
+
+4. FORMULE DE COUVERTURE
+────────────────────────────────────────────────────────────────────────────
+
+Couverture = |CU_inclus| / |CU_total|
+            = 8 / 8 = 100% (tous les CU modélisés)
+
+Complexité = |R| / (|A| × |CU|)
+           = 11 / (5 × 8) = 0.275 (modérée)
+
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                         CODE LaTeX - DIAGRAMME TikZ                        ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+\documentclass[tikz,border=10mm]{standalone}
+\usepackage[utf8]{inputenc}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,fit,calc,decorations.pathreplacing}
+
+% Définition des styles TikZ (remplace tikzstyle obsolète)
+\tikzset{
+  actor/.style={
+    ellipse,
+    minimum width=1.2cm,
+    minimum height=0.8cm,
+    draw=black,
+    fill=lightblue,
+    font=\small\bfseries
+  },
+  usecase/.style={
+    ellipse,
+    minimum width=1.5cm,
+    minimum height=0.6cm,
+    draw=black,
+    fill=lightyellow,
+    font=\small
+  },
+  system/.style={
+    rectangle,
+    minimum width=12cm,
+    minimum height=10cm,
+    draw=black,
+    line width=2pt,
+    fill=white
+  },
+  association/.style={
+    draw=black,
+    line width=1pt
+  },
+  include/.style={
+    draw=red,
+    ->,
+    line width=1.5pt,
+    dashed
+  },
+  extend/.style={
+    draw=blue,
+    ->,
+    line width=1.5pt,
+    dashed
+  },
+  generalization/.style={
+    draw=green,
+    ->,
+    line width=1pt,
+    fill=white
+  }
+}
+
+\begin{document}
+
+\begin{tikzpicture}[
+  node distance=2cm,
+  every text node part/.append style={align=center}
+]
+
+% ─────────────────────────────────────────────────────────────────────────
+% CONTENEUR SYSTÈME
+% ─────────────────────────────────────────────────────────────────────────
+\node[system] (system) at (0,0) {};
+\node[above=0.4cm of system.north, anchor=south] (title) 
+  {\textbf{\Large Distributed IDE System}};
+
+% ─────────────────────────────────────────────────────────────────────────
+% ACTEURS (Externes au système)
+% ─────────────────────────────────────────────────────────────────────────
+
+% Acteur primaire
+\node[actor] (dev) at (-6, 3) {Developer};
+
+% Acteurs secondaires (services)
+\node[actor] (lsp) at (-6, -3) {LSP Server};
+\node[actor] (term) at (6, -3) {Terminal\\Service};
+\node[actor] (webrtc) at (6, 3) {WebRTC\\Engine};
+\node[actor] (repo) at (0, -6) {Repository};
+
+% ─────────────────────────────────────────────────────────────────────────
+% CAS D'UTILISATION À L'INTÉRIEUR DU SYSTÈME
+% ─────────────────────────────────────────────────────────────────────────
+
+% Groupe: Code Writing & LSP
+\node[usecase] (writecode) at (-2, 1.5) {Write Code};
+\node[usecase] (viewlsp) at (0, 0.5) {View LSP\\Suggestions};
+
+% Groupe: Execution & Terminal
+\node[usecase] (execterminal) at (2, 1.5) {Execute\\Terminal};
+\node[usecase] (handleconn) at (1, -0.5) {Handle\\Connections};
+
+% Groupe: Version Control
+\node[usecase] (synccode) at (-2, -1.5) {Synchronize\\Code};
+\node[usecase] (browserepo) at (-0.5, -2.5) {Browse\\Repository};
+
+% Groupe: Debug & Management
+\node[usecase] (debug) at (2, -1.5) {Debug Code};
+\node[usecase] (managec) at (4, -0.5) {Manage\\Connections};
+
+% ─────────────────────────────────────────────────────────────────────────
+% ASSOCIATIONS (Acteur → Cas d'utilisation)
+% ─────────────────────────────────────────────────────────────────────────
+
+% Developer → CU
+\draw[association] (dev) -- (writecode);
+\draw[association] (dev) -- (execterminal);
+\draw[association] (dev) -- (synccode);
+\draw[association] (dev) -- (debug);
+
+% LSP Server → CU
+\draw[association] (lsp) -- (viewlsp);
+
+% Terminal Service → CU
+\draw[association] (term) -- (execterminal);
+\draw[association] (term) -- (handleconn);
+
+% WebRTC Engine → CU
+\draw[association] (webrtc) -- (managec);
+\draw[association] (webrtc) -- (handleconn);
+
+% Repository → CU
+\draw[association] (repo) -- (browserepo);
+\draw[association] (repo) -- (synccode);
+
+% ─────────────────────────────────────────────────────────────────────────
+% RELATIONS INCLUDE (Include)
+% ─────────────────────────────────────────────────────────────────────────
+
+% WriteCode include ViewLSPSuggestions
+\draw[include] (writecode) -- (viewlsp) 
+  node[midway, right, font=\tiny, color=red] {«include»};
+
+% ExecuteTerminal include HandleConnections
+\draw[include] (execterminal) -- (handleconn)
+  node[midway, right, font=\tiny, color=red] {«include»};
+
+% SynchronizeCode include BrowseRepository
+\draw[include] (synccode) -- (browserepo)
+  node[midway, left, font=\tiny, color=red] {«include»};
+
+% ─────────────────────────────────────────────────────────────────────────
+% RELATIONS EXTEND (Extension)
+% ─────────────────────────────────────────────────────────────────────────
+
+% WriteCode extend DebugCode
+\draw[extend] (debug) -- (writecode)
+  node[midway, above, font=\tiny, color=blue] {«extend»};
+
+% SynchronizeCode extend ManageConnections
+\draw[extend] (managec) -- (synccode)
+  node[midway, below, font=\tiny, color=blue] {«extend»};
+
+% ─────────────────────────────────────────────────────────────────────────
+% LÉGENDE (Simplifiée sans sous-tikzpictures imbriquées)
+% ─────────────────────────────────────────────────────────────────────────
+
+\node[draw=none, below=1.5cm of system.south, anchor=north, 
+  font=\small, align=left] (legend) {
+  \textbf{Légende :} \quad
+  \tikz[baseline=-0.15em] \node[actor, scale=0.5] {};
+  \small{Actor} \quad
+  \tikz[baseline=-0.15em] \node[usecase, scale=0.5] {};
+  \small{Use Case} \\
+  \tikz[baseline=-0.15em, thick] \draw[include] (0,0) -- (0.2,0);
+  \small{Include} \quad
+  \tikz[baseline=-0.15em, thick] \draw[extend] (0,0) -- (0.2,0);
+  \small{Extend} \quad
+  \tikz[baseline=-0.15em] \draw[association] (0,0) -- (0.2,0);
+  \small{Association}
+};
+
+\end{tikzpicture}
+
+\end{document}
+
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                      FORMALISATION DES INTERACTIONS                        ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+INTERACTION MATRIX (Matrice de traçabilité)
+────────────────────────────────────────────────────────────────────────────
+
+                    Dev    LSP    Term   WebRTC  Repo
+WriteCode            X              
+ViewLSP                            X
+ExecuteTerminal      X            X       
+HandleConnections                       X       X
+SynchronizeCode      X                          X
+BrowseRepository                               X
+DebugCode            X
+ManageConnections                       X
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FORMULE D'INTERACTION
+────────────────────────────────────────────────────────────────────────────
+
+Pour chaque cas d'utilisation UC_i :
+
+  Flot principal (Main Flow) :
+    1. Acteur primaire initie UC_i
+    2. Système exécute séquence d'actions
+    3. Postconditions vérifiées
+    
+  Flux inclus (Included Flow) :
+    UC_i ──include──> UC_j
+    ∀ exécution de UC_i ⟹ exécution de UC_j
+    
+  Flux étendu (Extended Flow) :
+    UC_i ──extend──> UC_j
+    Exécution conditionnelle : UC_j = f(condition)
+
+
+FORMALISATION DE CHAQUE CAS D'UTILISATION
+────────────────────────────────────────────────────────────────────────────
+
+1. WRITE CODE
+   ──────────────────────────────────────────────────────────────────────────
+   Acteur primaire     : Developer
+   Acteur secondaire   : LSPServer (include)
+   Préconditions       : IDE open, editor active
+   Postconditions      : code modified, suggestions available
+   
+   Séquence principale :
+     1. Developer enters code in editor
+     2. System triggers LSP suggestions (include ViewLSP)
+     3. Developer receives autocomplete proposals
+     4. Code is persisted
+     5. Memory state updated
+   
+   Séquence alternative :
+     • Debug mode option (extend DebugCode)
+     • If error detected → Debug initiated
+
+
+2. VIEW LSP SUGGESTIONS
+   ──────────────────────────────────────────────────────────────────────────
+   Acteur primaire     : LSPServer
+   Préconditions       : WriteCode triggered, LSP cache ready
+   Postconditions      : suggestions displayed in IDE
+   
+   Séquence :
+     1. LSPManager.getCompletions(uri, line, char)
+     2. Check LspCacheManager for cached results
+     3. If cache miss → query LSP server (100-1000x faster if hit)
+     4. Return formatted suggestions
+     5. Update UI with proposals
+
+
+3. EXECUTE TERMINAL
+   ──────────────────────────────────────────────────────────────────────────
+   Acteur primaire     : Developer
+   Acteur secondaire   : TerminalService, WebRTC (include HandleConnections)
+   Préconditions       : Terminal session active
+   Postconditions      : command executed, output displayed
+   
+   Séquence :
+     1. Developer inputs command
+     2. Terminal process manager validates
+     3. HandleConnections protocol (include) established
+     4. Command executed in subprocess
+     5. Output streamed to terminal
+     6. Process cleanup on exit
+
+
+4. HANDLE CONNECTIONS
+   ──────────────────────────────────────────────────────────────────────────
+   Acteur primaire     : WebRTC / Terminal / System
+   Préconditions       : Connection required
+   Postconditions      : Connection established, heartbeat active
+   
+   Séquence :
+     1. Connection request received
+     2. WebSocketHeartbeatManager initialized
+     3. Heartbeat monitoring started (65s timeout)
+     4. Dead connections detected & cleaned
+     5. Reconnection logic if needed
+
+
+5. SYNCHRONIZE CODE
+   ──────────────────────────────────────────────────────────────────────────
+   Acteur primaire     : Developer
+   Acteur secondaire   : Repository, BrowseRepository (include)
+   Préconditions       : Git configured, local changes pending
+   Postconditions      : Remote synchronized, conflicts resolved
+   
+   Séquence principal :
+     1. Developer triggers sync
+     2. System runs BrowseRepository (include) for state
+     3. Conflict detection (optional ManageConnections extend)
+     4. CRDT sync algorithm applied
+     5. Remote updated
+   
+   Extension :
+     • If connection fails → ManageConnections retry logic
+
+
+6. BROWSE REPOSITORY
+   ──────────────────────────────────────────────────────────────────────────
+   Acteur primaire     : Repository
+   Préconditions       : Git repository accessible
+   Postconditions      : File tree displayed, history available
+   
+   Séquence :
+     1. Query JGit for repository state
+     2. Build file tree from commits
+     3. Calculate diffs for changed files
+     4. Display browser UI
+     5. Enable file operations
+
+
+7. DEBUG CODE
+   ──────────────────────────────────────────────────────────────────────────
+   Acteur primaire     : Developer
+   Type                : Extension de WriteCode (optionnel)
+   Condition d'activation : Error detected || User requests debug
+   Postconditions      : Debugger session active, breakpoints set
+   
+   Séquence :
+     1. Developer activates debug (extends WriteCode)
+     2. GlobalExceptionHandler catches breakpoint
+     3. Debug symbols loaded
+     4. Breakpoints established
+     5. Step-through execution enabled
+
+
+8. MANAGE CONNECTIONS
+   ──────────────────────────────────────────────────────────────────────────
+   Acteur primaire     : WebRTC
+   Type                : Extension de SynchronizeCode (conditionnel)
+   Condition           : Network issues detected
+   Préconditions       : Connection state = unstable
+   Postconditions      : Reconnected or graceful fallback
+   
+   Séquence :
+     1. WebRtcConnectionManager.autoReconnect() triggered
+     2. Exponential backoff: 1s → 5s → 10s → 30s
+     3. Max 10 attempts before timeout
+     4. IceCandidateBuffer manages pending messages
+     5. Recovery or fallback to polling mode
+
+
+RELATIONS FORMELLES
+────────────────────────────────────────────────────────────────────────────
+
+Include Relations (Mandatoire) :
+  WriteCode              ⊢ ViewLSPSuggestions
+  ExecuteTerminal        ⊢ HandleConnections  
+  SynchronizeCode        ⊢ BrowseRepository
+
+Extend Relations (Conditionnel) :
+  WriteCode             ⟿ DebugCode          [if error_detected]
+  SynchronizeCode       ⟿ ManageConnections  [if network_unstable]
+
+Précédence :
+  DebugCode ⊂ WriteCode (debug ne peut s'exécuter seul)
+  ManageConnections ⊂ SynchronizeCode
+
+
+CALCUL DE COUVERTURE SYSTÈME
+────────────────────────────────────────────────────────────────────────────
+
+Cas d'utilisation couverts      : 8
+Acteurs impliqués               : 5
+Associations                    : 9
+Relations include               : 3
+Relations extend                : 2
+Complexité totale               : 9 + 3 + 2 = 14 relations
+Score de couverture             : 8/8 = 100%
+
+
+PROPRIÉTÉS QUALITATIVES
+────────────────────────────────────────────────────────────────────────────
+
+Complétude      : ✅ Tous les features principaux modélisés
+Précision       : ✅ Relations include/extend explicitement définies
+Testabilité     : ✅ Chaque cas d'utilisation testable indépendamment
+Traçabilité     : ✅ Matrice d'interaction disponible
+Maintenabilité  : ✅ Structure modulaire et extensible
+
+
+═══════════════════════════════════════════════════════════════════════════════
+FIN DE DOCUMENT
+═══════════════════════════════════════════════════════════════════════════════

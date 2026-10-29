@@ -1,0 +1,381 @@
+/*
+ * Distributed IDE — Modern Theme (VSCode-inspired)
+ * Theme ID: modern
+ *
+ * ═══════════════════════════════════════════════════════════
+ *  DESIGN SYSTEM v2 — Coherent token structure
+ *  Inspired by VSCode: dark, modern, elegant
+ * ═══════════════════════════════════════════════════════════
+ */
+
+/* ═══════════════════════════════════════════════════════════
+   1. DESIGN TOKENS
+   ═══════════════════════════════════════════════════════════ */
+.root {
+    -fx-font-family: "Segoe UI", "Ubuntu", "Noto Sans", system-ui, sans-serif;
+    -fx-font-size: 13px;
+
+    /* ── Background Surfaces ────────────────────────────── */
+    -ide-bg-primary:     #1e1e1e;    /* Main editor background */
+    -ide-bg-secondary:   #252526;    /* Sidebar, tab bar */
+    -ide-bg-tertiary:    #2d2d30;    /* Section background */
+    -ide-bg-elevated:    #383838;    /* Popups, tooltips */
+    -ide-bg-active:      #313131;    /* Active menu item */
+    -ide-bg-hover:       #2d2d30;    /* Hover state */
+    -ide-bg-input:       #3e3e42;    /* Input fields */
+    -ide-bg-selection:   #264f78;    /* Selection highlight */
+    -ide-bg-drop:        rgba(144, 202, 249, 0.15);
+
+    /* ── Borders ────────────────────────────────────────── */
+    -ide-border:         #3e3e42;
+    -ide-border-light:   #444446;
+    -ide-border-active:  #007acc;
+
+    /* ── Foreground Text ────────────────────────────────── */
+    -ide-fg-primary:     #e0e0e0;    /* Normal text */
+    -ide-fg-secondary:   #b4b4b4;    /* Subtle text */
+    -ide-fg-muted:       #858585;    /* Very subtle */
+    -ide-fg-disabled:    #6a6a6a;    /* Disabled state */
+    -ide-fg-inverse:     #ffffff;    /* High contrast */
+
+    /* ── Accent Colors ──────────────────────────────────── */
+    -ide-accent:         #007acc;    /* Primary action (VSCode blue) */
+    -ide-accent-hover:   #1177bb;    /* Hover state */
+    -ide-accent-pressed: #005a9e;    /* Pressed state */
+    -ide-accent-subtle:  rgba(0, 122, 204, 0.12);
+
+    /* ── Semantic Colors ────────────────────────────────── */
+    -ide-danger:         #f48771;    /* Error/danger */
+    -ide-danger-hover:   #f88679;
+    -ide-danger-bg:      rgba(244, 135, 113, 0.12);
+    -ide-warning:        #dcdcaa;    /* Warning (yellow) */
+    -ide-warning-bg:     rgba(220, 220, 170, 0.12);
+    -ide-success:        #4cb050;    /* Success (green) */
+    -ide-success-hover:  #5dbc5f;
+    -ide-info:           #66d9ef;    /* Info (cyan) */
+
+    /* ── Status Bar ─────────────────────────────────────── */
+    -ide-statusbar-bg:   #007acc;
+    -ide-statusbar-fg:   #ffffff;
+
+    /* ── Activity Bar ───────────────────────────────────── */
+    -ide-activitybar-bg: #333333;
+    -ide-activitybar-fg: #858585;
+    -ide-activitybar-active: #ffffff;
+    -ide-activitybar-badge: #007acc;
+
+    /* ── Editor ─────────────────────────────────────────── */
+    -ide-editor-bg:      #1e1e1e;
+    -ide-editor-fg:      #e0e0e0;
+    -ide-editor-line:    #252526;
+    -ide-editor-caret:   #aeafad;
+    -ide-gutter-fg:      #6a9955;    /* Line numbers (greenish) */
+
+    /* ── Typography ─────────────────────────────────────── */
+    -ide-font-mono:      "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
+
+    /* ── Spacing (4px base) ─────────────────────────────── */
+    -ide-sp-xxs: 2; -ide-sp-xs: 4; -ide-sp-sm: 6; -ide-sp-md: 8;
+    -ide-sp-lg: 12; -ide-sp-xl: 16; -ide-sp-xxl: 24;
+
+    /* ── Radius ─────────────────────────────────────────── */
+    -ide-radius-sm: 2; -ide-radius-md: 4; -ide-radius-lg: 6;
+
+    /* ── Shadows ────────────────────────────────────────── */
+    -ide-shadow:    dropshadow(gaussian, rgba(0,0,0,0.4), 8, 0, 0, 2);
+    -ide-shadow-lg: dropshadow(gaussian, rgba(0,0,0,0.5), 14, 0, 0, 3);
+
+    /* ── Apply root ─────────────────────────────────────── */
+    -fx-background-color: -ide-bg-primary;
+    -fx-text-fill: -ide-fg-primary;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   2. MENU BAR & MENUS
+   ═══════════════════════════════════════════════════════════ */
+.menu-bar {
+    -fx-background-color: -ide-bg-secondary;
+    -fx-padding: 0;
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: -ide-border;
+}
+.menu-bar .menu { -fx-padding: 4 8 4 8; }
+.menu-bar .label { -fx-text-fill: -ide-fg-primary; -fx-font-size: 12px; }
+.menu-bar .menu:hover,
+.menu-bar .menu:showing { -fx-background-color: -ide-bg-active; }
+
+.context-menu {
+    -fx-background-color: -ide-bg-elevated;
+    -fx-border-color: -ide-border;
+    -fx-border-width: 1;
+    -fx-padding: 4 0 4 0;
+    -fx-effect: -ide-shadow;
+}
+.menu-item { -fx-padding: 4 20 4 20; }
+.menu-item .label { -fx-text-fill: -ide-fg-primary; -fx-font-size: 12px; }
+.menu-item:focused { -fx-background-color: -ide-bg-active; }
+.menu-item:pressed { -fx-background-color: -ide-accent; }
+.menu-item:pressed .label { -fx-text-fill: #ffffff; }
+
+/* ═══════════════════════════════════════════════════════════
+   3-10. BUTTONS, INPUTS, TREE, LIST, TABLE, TABS...
+   ═══════════════════════════════════════════════════════════ */
+
+.button {
+    -fx-background-color: -ide-bg-tertiary;
+    -fx-text-fill: -ide-fg-primary;
+    -fx-border-color: -ide-border;
+    -fx-border-width: 1;
+    -fx-padding: 6 14 6 14;
+    -fx-border-radius: 2;
+    -fx-background-radius: 2;
+    -fx-font-size: 12px;
+    -fx-cursor: hand;
+}
+.button:hover { -fx-background-color: -ide-bg-active; }
+.button:pressed { -fx-background-color: -ide-accent; -fx-text-fill: #ffffff; -fx-border-color: -ide-accent; }
+
+.button-primary {
+    -fx-background-color: -ide-accent;
+    -fx-text-fill: #ffffff;
+    -fx-border-color: -ide-accent;
+}
+.button-primary:hover { -fx-background-color: -ide-accent-hover; }
+
+.text-field, .text-area {
+    -fx-background-color: -ide-bg-input;
+    -fx-text-fill: -ide-fg-primary;
+    -fx-border-color: -ide-border;
+    -fx-border-width: 1;
+    -fx-padding: 4 8 4 8;
+    -fx-border-radius: 2;
+    -fx-background-radius: 2;
+    -fx-font-size: 12px;
+}
+.text-field:focused, .text-area:focused {
+    -fx-border-color: -ide-accent;
+    -fx-border-width: 2;
+}
+
+.tree-view {
+    -fx-background-color: -ide-bg-secondary;
+    -fx-border-color: -ide-border;
+    -fx-border-width: 0 1 0 0;
+}
+.tree-cell {
+    -fx-text-fill: -ide-fg-primary;
+    -fx-padding: 2 4 2 4;
+    -fx-font-size: 12px;
+}
+.tree-cell:filled:hover {
+    -fx-background-color: -ide-bg-hover;
+}
+.tree-cell:filled:selected {
+    -fx-background-color: -ide-bg-selection;
+    -fx-text-fill: #ffffff;
+}
+
+.list-view {
+    -fx-background-color: -ide-bg-secondary;
+    -fx-border-color: -ide-border;
+    -fx-border-width: 1;
+}
+.list-cell {
+    -fx-text-fill: -ide-fg-primary;
+    -fx-padding: 4 8 4 8;
+    -fx-font-size: 12px;
+}
+.list-cell:filled:selected {
+    -fx-background-color: -ide-bg-selection;
+    -fx-text-fill: #ffffff;
+}
+
+.table-view {
+    -fx-background-color: -ide-bg-secondary;
+    -fx-border-color: -ide-border;
+    -fx-border-width: 1;
+}
+.table-view .column-header {
+    -fx-background-color: -ide-bg-tertiary;
+    -fx-padding: 4 8 4 8;
+}
+.table-cell {
+    -fx-text-fill: -ide-fg-primary;
+    -fx-padding: 4 8 4 8;
+    -fx-font-size: 12px;
+}
+
+.tab-pane {
+    -fx-background-color: -ide-bg-primary;
+    -fx-padding: 0;
+}
+.tab-pane .tab-header-area {
+    -fx-background-color: -ide-bg-secondary;
+    -fx-padding: 0;
+    -fx-border-color: -ide-border;
+    -fx-border-width: 0 0 1 0;
+}
+.tab-pane .tab {
+    -fx-background-color: -ide-bg-secondary;
+    -fx-border-color: -ide-border;
+    -fx-border-width: 0 1 0 0;
+    -fx-padding: 6 12 6 12;
+}
+.tab-pane .tab:selected {
+    -fx-background-color: -ide-bg-primary;
+    -fx-border-color: -ide-accent;
+    -fx-border-width: 0 0 2 0;
+}
+.tab-pane .tab .tab-label {
+    -fx-text-fill: -ide-fg-secondary;
+    -fx-font-size: 12px;
+}
+.tab-pane .tab:selected .tab-label {
+    -fx-text-fill: -ide-fg-primary;
+    -fx-font-weight: bold;
+}
+
+.tab-dirty {
+    -fx-border-color: -ide-warning;
+    -fx-border-width: 0 0 2 0;
+}
+.tab-dirty .tab-label {
+    -fx-text-fill: -ide-warning;
+    -fx-font-weight: bold;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   11-20. SCROLL BAR, CHECKBOX, SEPARATOR, DIALOG, TOOLTIP...
+   ═══════════════════════════════════════════════════════════ */
+
+.scroll-bar {
+    -fx-background-color: -ide-bg-primary;
+}
+.scroll-bar:vertical .thumb,
+.scroll-bar:horizontal .thumb {
+    -fx-background-color: #464647;
+    -fx-background-radius: 5;
+    -fx-padding: 0;
+}
+.scroll-bar:vertical .thumb:hover,
+.scroll-bar:horizontal .thumb:hover {
+    -fx-background-color: #5a5a5d;
+}
+
+.check-box, .radio-button {
+    -fx-text-fill: -ide-fg-primary;
+    -fx-font-size: 12px;
+    -fx-cursor: hand;
+}
+.check-box .box, .radio-button .radio {
+    -fx-background-color: -ide-bg-input;
+    -fx-border-color: -ide-border;
+    -fx-border-width: 1;
+}
+.check-box:selected .box, .radio-button:selected .radio {
+    -fx-background-color: -ide-accent;
+    -fx-border-color: -ide-accent;
+}
+
+.separator {
+    -fx-border-color: -ide-border;
+}
+.separator:vertical { -fx-border-width: 0 1 0 0; }
+.separator:horizontal { -fx-border-width: 1 0 0 0; }
+
+.dialog {
+    -fx-background-color: -ide-bg-primary;
+}
+.dialog .header {
+    -fx-background-color: -ide-bg-secondary;
+    -fx-padding: 12 16 12 16;
+    -fx-border-color: -ide-border;
+    -fx-border-width: 0 0 1 0;
+}
+
+.tooltip {
+    -fx-background-color: -ide-bg-elevated;
+    -fx-text-fill: -ide-fg-primary;
+    -fx-border-color: -ide-border;
+    -fx-border-width: 1;
+    -fx-padding: 6 8 6 8;
+    -fx-border-radius: 2;
+    -fx-background-radius: 2;
+    -fx-font-size: 11px;
+    -fx-effect: -ide-shadow;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   21-28. STATUS BAR, ACTIVITY BAR, NOTIFICATIONS, PLUGINS...
+   ═══════════════════════════════════════════════════════════ */
+
+.status-bar {
+    -fx-background-color: -ide-bg-secondary;
+    -fx-border-color: -ide-border;
+    -fx-border-width: 1 0 0 0;
+    -fx-padding: 4 8 4 8;
+    -fx-spacing: 8;
+}
+.status-bar .label {
+    -fx-text-fill: -ide-fg-secondary;
+    -fx-font-size: 11px;
+}
+.status-item {
+    -fx-text-fill: -ide-fg-primary;
+    -fx-padding: 0 4 0 4;
+    -fx-cursor: hand;
+}
+
+.activity-bar {
+    -fx-background-color: -ide-activitybar-bg;
+    -fx-border-color: -ide-border;
+    -fx-border-width: 0 1 0 0;
+    -fx-padding: 8;
+}
+.activity-icon {
+    -fx-text-fill: -ide-activitybar-fg;
+    -fx-font-size: 18px;
+    -fx-padding: 10;
+    -fx-cursor: hand;
+}
+.activity-icon:hover {
+    -fx-text-fill: -ide-activitybar-active;
+}
+.activity-icon:selected {
+    -fx-text-fill: -ide-activitybar-active;
+    -fx-border-color: -ide-accent;
+    -fx-border-width: 2 0 0 0;
+}
+
+.notification-toast {
+    -fx-background-color: -ide-bg-elevated;
+    -fx-border-color: -ide-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 8 14 8 14;
+    -fx-effect: -ide-shadow;
+}
+.notification-info { -fx-border-color: -ide-info; -fx-border-width: 0 0 0 3; }
+.notification-success { -fx-border-color: -ide-success; -fx-border-width: 0 0 0 3; }
+.notification-warning { -fx-border-color: -ide-warning; -fx-border-width: 0 0 0 3; }
+.notification-error { -fx-border-color: -ide-danger; -fx-border-width: 0 0 0 3; }
+
+.plugin-state-enabled { -fx-text-fill: -ide-success; }
+.plugin-state-disabled { -fx-text-fill: -ide-fg-muted; }
+.plugin-state-error { -fx-text-fill: -ide-danger; }
+
+.hyperlink {
+    -fx-text-fill: -ide-accent;
+    -fx-cursor: hand;
+    -fx-underline: false;
+}
+.hyperlink:hover { -fx-text-fill: -ide-accent-hover; -fx-underline: true; }
+
+/* ═══════════════════════════════════════════════════════════
+   Connection status indicators
+   ═══════════════════════════════════════════════════════════ */
+.connection-dot.connected { -fx-text-fill: -ide-success; }
+.connection-dot.connecting { -fx-text-fill: -ide-warning; }
+.connection-dot.disconnected { -fx-text-fill: -ide-danger; }
+.connection-dot.error { -fx-text-fill: -ide-danger; }

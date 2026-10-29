@@ -1,0 +1,694 @@
+================================================================================
+      DIAGRAMMES DE SÉQUENCE - FLUX DES OPÉRATIONS COLLABORATIVES
+           Distributed IDE - Synchronisation et Coordination
+================================================================================
+
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,backgrounds}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+
+\geometry{margin=0.8in}
+\pagestyle{fancy}
+\fancyhead[R]{Diagrammes de Séquence - Opérations Collaboratives}
+\fancyfoot[C]{\thepage}
+
+% Style pour texte
+\lstset{
+  basicstyle=\ttfamily\tiny,
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{gray}\itshape,
+  breaklines=true,
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  frame=none
+}
+
+\begin{document}
+
+% ═════════════════════════════════════════════════════════════════════════
+% DIAGRAMME 1 : INSERTION SIMPLE
+% ═════════════════════════════════════════════════════════════════════════
+
+\section*{1. Insertion de Caractère - Séquence Locale}
+
+\begin{center}
+\begin{tikzpicture}[
+  scale=0.9,
+  every node/.style={font=\small},
+  actor/.style={rectangle, draw=black, fill=lightblue, minimum width=1.5cm, minimum height=0.4cm},
+  component/.style={rectangle, draw=black, fill=lightyellow, minimum width=1.8cm, minimum height=0.4cm},
+  datastore/.style={rectangle split, rectangle split parts=2, draw=black, fill=lightgreen, minimum width=1.5cm},
+  arrow/.style={->, line width=1.5pt, draw=black},
+]
+
+% Acteurs & Composants
+\node[actor] (user) at (0, 10) {User};
+\node[component] (editor) at (3, 10) {Editor};
+\node[component] (collab) at (6, 10) {Collaboration\\Engine};
+\node[component] (crdt) at (9, 10) {CRDTEngine};
+\node[datastore] (doc) at (12, 10) {CRDTDocument\nodepart{second}SortedMap};
+
+% Lignes de vie (lifelines)
+\draw[dashed, line width=1pt] (user) -- (0, 0.5);
+\draw[dashed, line width=1pt] (editor) -- (3, 0.5);
+\draw[dashed, line width=1pt] (collab) -- (6, 0.5);
+\draw[dashed, line width=1pt] (crdt) -- (9, 0.5);
+\draw[dashed, line width=1pt] (doc) -- (12, 0.5);
+
+% Messages
+% 1. User types
+\draw[arrow] (0, 9) -- (3, 8.5) node[midway, below, font=\tiny] {1: type('a')};
+\draw[rectangle, draw=red, fill=red!10, minimum width=1cm, minimum height=0.3cm] at (1.5, 8.7) {};
+
+% 2. Editor stores
+\draw[arrow] (3, 8.3) -- (3, 7.8) node[midway, right, font=\tiny] {2: store 'a'};
+
+% 3. Fire change event
+\draw[arrow] (3, 7.6) -- (6, 7.1) node[midway, below, font=\tiny] {3: onDocumentChange()};
+
+% 4. Get CRDT ID
+\draw[arrow] (6, 6.9) -- (9, 6.4) node[midway, below, font=\tiny] {4: insertCharacter(index=0, 'a')};
+
+% 5. Create ID & Element
+\draw[arrow] (9, 6.2) -- (9, 5.7) node[midway, right, font=\tiny] {5a: newId = (ts, nodeId, 0)};
+\draw[arrow] (9, 5.5) -- (9, 5.0) node[midway, right, font=\tiny] {5b: element = new CRDTElement(id, 'a')};
+
+% 6. Store in SortedMap
+\draw[arrow] (9, 4.8) -- (12, 4.3) node[midway, below, font=\tiny] {6: elements.put(id, elem)};
+
+% 7. Create Operation
+\draw[arrow] (9, 4.1) -- (9, 3.6) node[midway, right, font=\tiny] {7: op = INSERT(id, 'a', null, null)};
+
+% 8. Add to pending
+\draw[arrow] (9, 3.4) -- (9, 2.9) node[midway, right, font=\tiny] {8: pendingOps.add(op)};
+
+% 9. Notify listeners
+\draw[arrow] (9, 2.7) -- (6, 2.2) node[midway, below, font=\tiny] {9: notifyListeners()};
+
+% 10. UI Update
+\draw[arrow] (6, 2.0) -- (3, 1.5) node[midway, below, font=\tiny] {10: updateUI('a')};
+
+% 11. Show to user
+\draw[arrow] (3, 1.3) -- (0, 0.8) node[midway, below, font=\tiny] {11: display 'a'};
+
+\end{tikzpicture}
+\end{center}
+
+\textbf{Points clés :}
+\begin{itemize}
+    \item ID unique créé à chaque insertion : $(timestamp, nodeId, disambiguator)$
+    \item Insertion O(log n) dans SortedMap
+    \item Opération enregistrée pour synchronisation
+    \item Listeners notifiés pour mise à jour UI
+    \item Pas de dépendance globale (offline-ready)
+\end{itemize}
+
+\hrule\vspace{0.5cm}
+
+
+% ═════════════════════════════════════════════════════════════════════════
+% DIAGRAMME 2 : RÉSOLUTION DE CONFLIT
+% ═════════════════════════════════════════════════════════════════════════
+
+\section*{2. Résolution de Conflit - Insertion Simultanée}
+
+\begin{center}
+\begin{tikzpicture}[
+  scale=0.85,
+  every node/.style={font=\small},
+  actor/.style={rectangle, draw=black, fill=lightblue, minimum width=1.5cm, minimum height=0.4cm},
+  component/.style={rectangle, draw=black, fill=lightyellow, minimum width=1.6cm, minimum height=0.4cm},
+]
+
+% Timeline
+\draw[line width=2pt] (0, 0) -- (14, 0) node[right] {temps →};
+
+% Replica A
+\node[actor] (repA) at (1, 8) {Replica A};
+\draw[dashed] (1, 7.8) -- (1, 0.5);
+
+% Replica B
+\node[actor] (repB) at (7, 8) {Replica B};
+\draw[dashed] (7, 7.8) -- (7, 0.5);
+
+% Network
+\node[component] at (4, 7) {Network};
+
+% Events Replica A
+\node[rectangle, draw=blue, fill=blue!20, minimum width=3cm] (evtA1) at (1, 7) 
+  {\tiny t=1: Insert 'H' @ pos 0\\ ID=(1,"A",0)};
+
+% Events Replica B
+\node[rectangle, draw=green, fill=green!20, minimum width=3cm] (evtB1) at (7, 7)
+  {\tiny t=1: Insert 'B' @ pos 0\\ ID=(1,"B",0)};
+
+% Broadcast
+\draw[->, line width=2pt, red] (1, 6.5) -- (7, 6) node[midway, above, font=\tiny, red] 
+  {Send: 'H',(1,A,0)};
+
+\draw[->, line width=2pt, red] (7, 5.8) -- (1, 5.3) node[midway, above, font=\tiny, red]
+  {Send: 'B',(1,B,0)};
+
+% Local results before sync
+\node[rectangle, draw=blue, fill=blue!10, minimum width=2.5cm] at (1, 4.8)
+  {\tiny Local: "H"\\ Pending: (1,A,0)};
+
+\node[rectangle, draw=green, fill=green!10, minimum width=2.5cm] at (7, 4.8)
+  {\tiny Local: "B"\\ Pending: (1,B,0)};
+
+% Apply remote operations
+\node[rectangle, draw=darkcyan, fill=cyan!20, minimum width=2.8cm] (applyA) at (1, 3.5)
+  {\tiny applyRemote('B')\\ (1,B,0) < (1,A,0)};
+
+\node[rectangle, draw=darkcyan, fill=cyan!20, minimum width=2.8cm] (applyB) at (7, 3.5)
+  {\tiny applyRemote('H')\\ (1,A,0) < (1,B,0)};
+
+% Final state
+\node[rectangle, draw=darkgreen, fill=green!30, minimum width=3cm, line width=2pt] at (1, 2)
+  {\textbf{\tiny Final: "BH"}};
+
+\node[rectangle, draw=darkgreen, fill=green!30, minimum width=3cm, line width=2pt] at (7, 2)
+  {\textbf{\tiny Final: "BH"}};
+
+% Convergence arrow
+\draw[->, line width=3pt, darkgreen] (4, 1.8) -- (4, 0.3) 
+  node[below, font=\small, color=darkgreen] {\textbf{CONVERGENCE ✓}};
+
+% Explanation boxes
+\node[draw=none, align=left, font=\tiny] at (4.5, 5.5) {
+  \textbf{Ordre CRDT :}\\
+  (1,"A",0) > (1,"B",0)\\
+  car "A" > "B"\\
+  \\
+  Résultat unique :\\
+  SortedMap tri auto :\\
+  (1,"B",0) + (1,"A",0)
+};
+
+\end{tikzpicture}
+\end{center}
+
+\textbf{Propriété CRDT - Commutativité :}
+$$\text{Replica A timeline:} \quad \text{Insert A} \to \text{Insert B}$$
+$$\text{Replica B timeline:} \quad \text{Insert B} \to \text{Insert A}$$
+$$\text{Résultat :} \quad "BH" \text{ (identique sur tous les réplicas)}$$
+
+\hrule\vspace{0.5cm}
+
+
+% ═════════════════════════════════════════════════════════════════════════
+% DIAGRAMME 3 : APPLICATION OPÉRATION DISTANTE
+% ═════════════════════════════════════════════════════════════════════════
+
+\section*{3. Application d'Opération Distante - CŒUR DE LA CONVERGENCE}
+
+\begin{center}
+\begin{tikzpicture}[
+  scale=0.95,
+  every node/.style={font=\small},
+  process/.style={rectangle, draw=black, fill=lightyellow, minimum width=2cm, minimum height=0.5cm},
+  decision/.style={diamond, draw=black, fill=orange, minimum width=2cm},
+  action/.style={rectangle, draw=black, fill=lightgreen, minimum width=2.5cm, minimum height=0.5cm},
+]
+
+% Start
+\node[circle, draw=black, fill=red] (start) at (0, 10) {};
+
+% Input
+\node[process] (input) at (0, 9) {Reçu : OP distante};
+
+% Check type
+\node[decision] (typeCheck) at (0, 7.5) {Type?};
+
+% INSERT branch
+\node[decision] (insertCheck) at (-3, 6) {ID déjà?};
+\node[action] (insertNew) at (-3, 4.5) {Créer CRDTElement\najouter à SortedMap};
+\node[rectangle, draw=red, fill=red!10] (insertSkip) at (-3, 3) {Skip (durée)};
+
+\node[] (insertMerge) at (-3, 1.5) {};
+
+% DELETE branch
+\node[action] (deleteOp) at (3, 6) {Trouver élément\npar ID};
+\node[decision] (deleteExists) at (3, 4.5) {Existe?};
+\node[action] (markDeleted) at (3, 3) {markDeleted()};
+\node[rectangle, draw=red, fill=red!10] (deleteSkip) at (3, 1.5) {Skip};
+
+% Update clock
+\node[process] (updateClock) at (0, 0.5) {logicalClock = max(clock, op.ts) + 1};
+
+% Record history
+\node[process] (record) at (0, -0.5) {operationHistory.add(op)};
+
+% Notify listeners
+\node[process] (notify) at (0, -1.5) {notifyListeners()};
+
+% End
+\node[circle, draw=black, fill=green] (end) at (0, -2.5) {};
+
+% Connections
+\draw[->, line width=1.5pt] (start) -- (input);
+\draw[->, line width=1.5pt] (input) -- (typeCheck);
+
+% INSERT path
+\draw[->, line width=1.5pt] (typeCheck) -| (-3, 6) node[midway, above, font=\tiny] {INSERT};
+\draw[->, line width=1.5pt] (insertCheck) -- (-3, 5) node[midway, right, font=\tiny] {non};
+\draw[->, line width=1.5pt] (insertCheck) -- (insertSkip) node[midway, right, font=\tiny] {oui};
+\draw[->, line width=1.5pt] (insertNew) -- (-3, 2);
+\draw[->, line width=1.5pt] (insertSkip) -- (-3, 2);
+\draw[->, line width=1.5pt] (-3, 2) -- (insertMerge);
+
+% DELETE path
+\draw[->, line width=1.5pt] (typeCheck) -| (3, 6) node[midway, above, font=\tiny] {DELETE};
+\draw[->, line width=1.5pt] (deleteOp) -- (deleteExists);
+\draw[->, line width=1.5pt] (deleteExists) -- (markDeleted) node[midway, right, font=\tiny] {oui};
+\draw[->, line width=1.5pt] (deleteExists) -- (deleteSkip) node[midway, right, font=\tiny] {non};
+\draw[->, line width=1.5pt] (markDeleted) -- (3, 1.5);
+\draw[->, line width=1.5pt] (deleteSkip) -- (3, 1.5);
+\draw[->, line width=1.5pt] (3, 1.5) -- (insertMerge);
+
+% Merge paths
+\draw[->, line width=1.5pt] (insertMerge) -- (updateClock);
+\draw[->, line width=1.5pt] (updateClock) -- (record);
+\draw[->, line width=1.5pt] (record) -- (notify);
+\draw[->, line width=1.5pt] (notify) -- (end);
+
+\end{tikzpicture}
+\end{center}
+
+\textbf{Propriétés Critiques :}
+\begin{enumerate}
+    \item \textbf{Idempotence :} Si déjà présent, skip (ligne 3)
+    \item \textbf{Commutativité :} SortedMap tri automatiquement les IDs
+    \item \textbf{Causalité :} logicalClock augmente → ordre préservé
+    \item \textbf{Soft delete :} Jamais supprimer physiquement
+\end{enumerate}
+
+\hrule\vspace{0.5cm}
+
+
+% ═════════════════════════════════════════════════════════════════════════
+% DIAGRAMME 4 : SYNCHRONISATION RÉSEAU
+% ═════════════════════════════════════════════════════════════════════════
+
+\section*{4. Synchronisation Réseau - Orchestration Multi-Réplicas}
+
+\begin{center}
+\begin{tikzpicture}[
+  scale=0.85,
+  every node/.style={font=\small},
+  actor/.style={rectangle, draw=black, fill=lightblue, minimum width=1.5cm, minimum height=0.4cm},
+  network/.style={rectangle, draw=black, fill=orange, minimum width=1.8cm, minimum height=0.4cm},
+  message/.style={->, line width=1.5pt, draw=black}
+]
+
+% Participants
+\node[actor] (rep1) at (1, 9) {Replica 1};
+\node[actor] (rep2) at (5, 9) {Replica 2};
+\node[network] (sigServ) at (3, 5.5) {Signaling\\Server};
+\node[actor] (rep3) at (9, 9) {Replica 3};
+
+% Lifelines
+\draw[dashed, line width=1.5pt] (1, 8.7) -- (1, 0.5);
+\draw[dashed, line width=1.5pt] (5, 8.7) -- (5, 0.5);
+\draw[dashed, line width=1.5pt] (3, 5.2) -- (3, 0.5);
+\draw[dashed, line width=1.5pt] (9, 8.7) -- (9, 0.5);
+
+% Events on Replica 1
+\node[rectangle, draw=blue, fill=blue!20, minimum width=2.5cm] at (1, 8) 
+  {\tiny Local edit: Insert 'X'};
+
+% Event: Replica 1 → Server
+\draw[message] (1.3, 7.5) -- (2.7, 6.5) 
+  node[midway, below, font=\tiny] {1: syncOps([op1])};
+
+% Server receives
+\node[rectangle, draw=orange, fill=orange!20, minimum width=2.5cm] at (3, 6)
+  {\tiny Demux op1\\ Broadcast};
+
+% Server → Rep2
+\draw[message] (3.3, 5.3) -- (4.8, 4.5)
+  node[midway, below, font=\tiny] {2: remoteOps([op1])};
+
+% Server → Rep3
+\draw[message] (3.3, 5.2) -- (8.8, 4.5)
+  node[midway, above, font=\tiny] {3: remoteOps([op1])};
+
+% Rep2 receives
+\node[rectangle, draw=green, fill=green!20, minimum width=2.5cm] at (5, 4)
+  {\tiny Apply op1\\ (idempotent)};
+
+% Rep3 receives
+\node[rectangle, draw=green, fill=green!20, minimum width=2.5cm] at (9, 4)
+  {\tiny Apply op1\\ (idempotent)};
+
+% Rep2 confirms
+\draw[message, dashed] (4.8, 3.5) -- (3.2, 2.5)
+  node[midway, above, font=\tiny] {4: ackSync(op1)};
+
+% Rep3 confirms
+\draw[message, dashed] (8.8, 3.5) -- (3.2, 2.5)
+  node[midway, above, font=\tiny] {5: ackSync(op1)};
+
+% All converged
+\node[rectangle, draw=darkgreen, fill=green!30, line width=2pt, minimum width=3cm] at (5, 1)
+  {\textbf{\tiny All replicas converged}};
+
+\end{tikzpicture}
+\end{center}
+
+\textbf{Garanties :}
+\begin{itemize}
+    \item Broadcast via SignalingServer (room-based)
+    \item Chaque opération avec horodatage unique
+    \item Réception multiple = idempotent (pas dupliquée)
+    \item Ordre des réplicas n'importe pas (commutativité)
+\end{itemize}
+
+\hrule\vspace{0.5cm}
+
+
+% ═════════════════════════════════════════════════════════════════════════
+% DIAGRAMME 5 : LSP SYNCHRONISATION
+% ═════════════════════════════════════════════════════════════════════════
+
+\section*{5. Intégration LSP - Synchronisation Bidirectionnelle}
+
+\begin{center}
+\begin{tikzpicture}[
+  scale=0.85,
+  every node/.style={font=\small},
+  component/.style={rectangle, draw=black, fill=lightyellow, minimum width=1.8cm, minimum height=0.4cm},
+]
+
+\node[component] (editor) at (0, 10) {Editor};
+\node[component] (bridge) at (3, 10) {LSP Bridge};
+\node[component] (replica) at (6, 10) {Replica Store};
+\node[component] (lspServer) at (9, 10) {LSP Server\n(Process)};
+
+% Lifelines
+\draw[dashed] (0, 9.7) -- (0, 0.5);
+\draw[dashed] (3, 9.7) -- (3, 0.5);
+\draw[dashed] (6, 9.7) -- (6, 0.5);
+\draw[dashed] (9, 9.7) -- (9, 0.5);
+
+% Edit event
+\node[rectangle, draw=blue, fill=blue!20] at (0, 9) {\tiny User types};
+
+% 1. didChange notification
+\draw[->, line width=1.5pt] (0.3, 8.5) -- (2.8, 8)
+  node[midway, below, font=\tiny] {1: didChange(uri, ops)};
+
+% 2. Convert to CRDT
+\draw[->, line width=1.5pt] (3.3, 7.7) -- (5.8, 7.2)
+  node[midway, below, font=\tiny] {2: toRemoteOps(ops)};
+
+% Apply in replica
+\node[rectangle, draw=green, fill=green!20, minimum width=2.2cm] at (6, 6.5)
+  {\tiny Apply via CRDT\napplyRemoteOp()};
+
+% 3. Forward to LSP
+\draw[->, line width=1.5pt] (6.3, 6.2) -- (8.8, 5.7)
+  node[midway, below, font=\tiny] {3: updateDocument(text)};
+
+% External LSP process
+\node[rectangle, draw=orange, fill=orange!20, minimum width=2cm] at (9, 4.8)
+  {\tiny Analyse code\nDiagnostics};
+
+% 4. Return diagnostics
+\draw[->, line width=1.5pt] (8.7, 4.5) -- (3.3, 3.8)
+  node[midway, above, font=\tiny] {4: publishDiagnostics()};
+
+% Bridge formats
+\node[rectangle, draw=purple, fill=purple!20] at (3, 3.2)
+  {\tiny Format LSP\nHover info};
+
+% 5. Return to editor
+\draw[->, line width=1.5pt] (2.8, 2.9) -- (0.3, 2.4)
+  node[midway, above, font=\tiny] {5: onDiagnostics()};
+
+% Display
+\node[rectangle, draw=blue, fill=blue!20] at (0, 1.5)
+  {\tiny Show error\nmarking};
+
+\end{tikzpicture}
+\end{center}
+
+\textbf{Points clés :}
+\begin{itemize}
+    \item Bidirection : Editor → LSP et LSP → Editor
+    \item Conversion nécessaire : SyncMessage ↔ CRDTOperation
+    \item CRDT assure cohérence même avec latence réseau
+    \item LSP externe = processus séparé indépendant
+\end{itemize}
+
+\hrule\vspace{0.5cm}
+
+
+% ═════════════════════════════════════════════════════════════════════════
+% DIAGRAMME 6 : ÉTABLISSEMENT WEBRTC
+% ═════════════════════════════════════════════════════════════════════════
+
+\section*{6. Établissement WebRTC P2P - Connexion Directe}
+
+\begin{center}
+\begin{tikzpicture}[
+  scale=0.85,
+  every node/.style={font=\small},
+  actor/.style={rectangle, draw=black, fill=lightblue, minimum width=1.6cm, minimum height=0.4cm},
+  network/.style={rectangle, draw=black, fill=orange, minimum width=1.8cm, minimum height=0.4cm},
+  server/.style={rectangle, draw=black, fill=darkgray!50, minimum width=1.6cm, minimum height=0.4cm},
+]
+
+% Participants
+\node[actor] (peer1) at (0, 9) {Peer A};
+\node[network] (sigServ) at (3.5, 9) {Signaling\\Server};
+\node[actor] (peer2) at (7, 9) {Peer B};
+\node[server] (stunServer) at (3.5, 3) {STUN\\Server};
+
+% Lifelines
+\draw[dashed, line width=1pt] (0, 8.7) -- (0, 0.5);
+\draw[dashed, line width=1pt] (3.5, 8.7) -- (3.5, 1.5);
+\draw[dashed, line width=1pt] (7, 8.7) -- (7, 0.5);
+\draw[dashed, line width=1pt] (3.5, 3) -- (3.5, 0.5);
+
+% 1. Peer A initiates
+\node[rectangle, draw=blue, fill=blue!20] at (0, 8) {\tiny requestCall()};
+
+% 2. Register in signaling
+\draw[->, line width=1.5pt] (0.3, 7.5) -- (3.2, 7)
+  node[midway, below, font=\tiny] {1: register(peerA)};
+
+% 3. Find peer B
+\draw[->, line width=1.5pt] (3.5, 6.8) -- (6.8, 6.3)
+  node[midway, below, font=\tiny] {2: incomingCall(peerA)};
+
+% 4. Peer B accepts
+\node[rectangle, draw=green, fill=green!20] at (7, 5.8) {\tiny accept()};
+
+% 5. Send answer back
+\draw[->, line width=1.5pt] (6.8, 5.3) -- (3.2, 4.8)
+  node[midway, above, font=\tiny] {3: sendAnswer()};
+
+% 6. Forward answer
+\draw[->, line width=1.5pt] (3.5, 4.5) -- (0.3, 4)
+  node[midway, above, font=\tiny] {4: answer()};
+
+% 7. Get public IPs (STUN)
+\draw[->, line width=1.5pt] (0.3, 3.8) -- (3.2, 3.3)
+  node[midway, left, font=\tiny] {5: STUN};
+
+\draw[->, line width=1.5pt] (3.2, 2.8) -- (0.3, 2.3)
+  node[midway, right, font=\tiny] {public IP};
+
+% 8. Send ICE candidates
+\draw[->, line width=1.5pt] (0.3, 2) -- (3.2, 1.5)
+  node[midway, left, font=\tiny] {6: ICE};
+
+\draw[->, line width=1.5pt] (3.5, 1.3) -- (6.8, 0.8)
+  node[midway, right, font=\tiny] {candidates};
+
+% Connected!
+\node[rectangle, draw=darkgreen, fill=green!30, line width=2pt, 
+       minimum width=3cm, minimum height=0.6cm] at (3.5, -0.5)
+  {\textbf{\small Direct P2P Connected ✓}};
+
+\end{tikzpicture}
+\end{center}
+
+\textbf{Phases WebRTC :}
+\begin{enumerate}
+    \item \textbf{Signaling} : Négociation via serveur central (signaling)
+    \item \textbf{STUN} : Découverte adresse IP publique
+    \item \textbf{ICE} : Échange candidates pour établir tunnel
+    \item \textbf{P2P Direct} : Connexion directe entre pairs (sans central)
+\end{enumerate}
+
+\hrule\vspace{0.5cm}
+
+
+% ═════════════════════════════════════════════════════════════════════════
+% DIAGRAMME 7 : SCÉNARIO COMPLET - ÉDITION COLLABORATIVE TEMPS RÉEL
+% ═════════════════════════════════════════════════════════════════════════
+
+\section*{7. Scénario Complet - Édition Collaborative Temps Réel}
+
+\begin{center}
+\begin{tikzpicture}[
+  scale=0.8,
+  every node/.style={font=\small},
+  actor/.style={rectangle, draw=black, fill=lightblue, minimum width=1.4cm, minimum height=0.35cm},
+  network/.style={rectangle, draw=black, fill=orange, minimum width=1.4cm, minimum height=0.35cm},
+]
+
+% Title
+\node at (4.5, 9.5) {\textbf{\large Alice écrit 'void foo() {' pendant que Bob écrit 'int bar;}'}};
+
+% Participants
+\node[actor] (alice) at (1, 8.8) {Alice};
+\node[network] (server) at (4.5, 8.8) {Server};
+\node[actor] (bob) at (8, 8.8) {Bob};
+
+% Lifelines
+\draw[dashed] (1, 8.5) -- (1, 0.5);
+\draw[dashed] (4.5, 8.5) -- (4.5, 0.5);
+\draw[dashed] (8, 8.5) -- (8, 0.5);
+
+% Timeline
+\node at (-0.5, 8) {0s};
+\node[rectangle, draw=blue, fill=blue!15, minimum width=2.8cm] at (1, 7.8)
+  {\tiny Alice: type 'v'\\ ID₁=(1,A,0)};
+
+\node[rectangle, draw=green, fill=green!15, minimum width=2.8cm] at (8, 7.8)
+  {\tiny Bob: type 'i'\\ ID₁=(1,B,0)};
+
+% Message 1
+\draw[->, line width=1.5pt] (1.4, 7.4) -- (4.2, 6.9)
+  node[midway, below, font=\tiny] {send v};
+
+% Message 2
+\draw[->, line width=1.5pt] (7.6, 7.4) -- (4.8, 6.9)
+  node[midway, below, font=\tiny] {send i};
+
+% Server receives both
+\node[rectangle, draw=orange, fill=orange!20] at (4.5, 6.5)
+  {\tiny Receive: v, i\\ Broadcast both};
+
+% Message 3
+\draw[->, line width=1.5pt] (4.2, 6.1) -- (7.6, 5.6)
+  node[midway, above, font=\tiny] {recv v};
+
+% Message 4
+\draw[->, line width=1.5pt] (4.8, 6.1) -- (1.4, 5.6)
+  node[midway, above, font=\tiny] {recv i};
+
+% Alice receives Bob's op
+\node[rectangle, draw=purple, fill=purple!20, minimum width=2.8cm] at (1, 5.2)
+  {\tiny applyRemote(i)\\ State: "iv"};
+
+% Bob receives Alice's op
+\node[rectangle, draw=purple, fill=purple!20, minimum width=2.8cm] at (8, 5.2)
+  {\tiny applyRemote(v)\\ State: "vi"};
+
+% Alice continues
+\node at (-0.5, 4.8) {0.2s};
+\node[rectangle, draw=blue, fill=blue!15, minimum width=2.8cm] at (1, 4.5)
+  {\tiny Alice: type 'o'\\ ID₂=(2,A,0)};
+
+% Bob continues
+\node[rectangle, draw=green, fill=green!15, minimum width=2.8cm] at (8, 4.5)
+  {\tiny Bob: type 'n'\\ ID₂=(2,B,0)};
+
+% Exchange 2
+\draw[->, line width=1.5pt] (1.4, 4.1) -- (4.2, 3.6);
+\draw[->, line width=1.5pt] (7.6, 4.1) -- (4.8, 3.6);
+
+\node[rectangle, draw=orange, fill=orange!20] at (4.5, 3.2)
+  {\tiny Broadcast};
+
+\draw[->, line width=1.5pt] (4.2, 2.8) -- (7.6, 2.3);
+\draw[->, line width=1.5pt] (4.8, 2.8) -- (1.4, 2.3);
+
+% Final states
+\node at (-0.5, 1.9) {0.4s};
+\node[rectangle, draw=darkgreen, fill=green!30, line width=2pt, minimum width=3cm] at (1, 1.4)
+  {\textbf{\tiny Final: "ivon"}};
+
+\node[rectangle, draw=darkgreen, fill=green!30, line width=2pt, minimum width=3cm] at (8, 1.4)
+  {\textbf{\tiny Final: "vino"}};
+
+% Convergence indicator
+\node at (4.5, 0.8) {\textbf{\large ✓ Convergence en ordre différent mais résultat identique}};
+
+\end{tikzpicture}
+\end{center}
+
+\textbf{Clé du succès CRDT :}
+\begin{itemize}
+    \item Alice voit result local "iv" avant ajout Alice
+    \item Bob voit result local "vi" avant ajout Bob
+    \item Les deux convergent vers même ordre car ordre CRDT détérministe
+    \item Pas de version centrale = chacun peut éditer offline
+    \item Réseau latence n'importe pas (asynchrone)
+\end{itemize}
+
+\hrule\vspace{0.5cm}
+
+% ═════════════════════════════════════════════════════════════════════════
+% TABLE DE SYNTHÈSE
+% ═════════════════════════════════════════════════════════════════════════
+
+\section*{Table de Synthèse - Flux des Opérations}
+
+\begin{center}
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{Phase} & \textbf{Composants} & \textbf{Durée} & \textbf{Propriété} \\
+\hline
+Édition locale & Editor → CRDT & ~1ms & Offline-ready \\
+\hline
+ID création & CRDTDocument & ~0.1ms & Unicité globale \\
+\hline
+Stockage & SortedMap & O(log n) & Positionnement \\
+\hline
+Synchronisation & SignalingServer & ~10-100ms & Broadcast \\
+\hline
+Reception & applyRemoteOp & O(log n) & Idempotent \\
+\hline
+Convergence & Tous réplicas & ~200ms & Commutative \\
+\hline
+LSP analysis & LspProcessManager & ~100-500ms & Externe \\
+\hline
+Affichage UI & updateUI & ~16ms & 60 FPS \\
+\hline
+\end{tabular}
+\end{center}
+
+════════════════════════════════════════════════════════════════════════════════
+
+\section*{Propriétés Mathématiques Appliquées}
+
+\subsection*{Commutativité}
+L'ordre d'application des opérations n'affecte pas le résultat final :
+$$\forall op_1, op_2 : \text{apply}(op_1, op_2) = \text{apply}(op_2, op_1)$$
+
+\subsection*{Idempotence}
+L'application répétée d'une même opération = une seule application :
+$$\forall op : \text{apply}(\text{apply}(op)) = \text{apply}(op)$$
+
+\subsection*{Causalité}
+L'horloge logique préserve l'ordre des événements au sein d'un nœud :
+$$\forall op_i, op_j \text{ du même nœud} : ts_i < ts_j \Rightarrow op_i \text{ avant } op_j$$
+
+\subsection*{Convergence}
+Tous les réplicas convergeront au même état malgré la latence réseau :
+$$\forall \text{ réplicas } A, B : 
+  \lim_{t \to \infty} \text{state}_A(t) = \text{state}_B(t)$$
+
+════════════════════════════════════════════════════════════════════════════════
+
+\end{document}

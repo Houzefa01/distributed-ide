@@ -1,0 +1,746 @@
+================================================================================
+      DIAGRAMME UML - ARCHITECTURE COMPLÈTE DU PROJET
+         Distributed IDE - Classes Importantes et Liaisons
+================================================================================
+
+\documentclass[tikz,border=10mm]{standalone}
+\usepackage[utf8]{inputenc}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,fit,calc,shadows}
+
+% Style des entités UML
+\tikzstyle{classbox} = [
+  rectangle split,
+  rectangle split parts=3,
+  draw=black,
+  line width=1.5pt,
+  minimum width=2.5cm,
+  minimum height=1.8cm,
+  inner sep=0.1cm,
+  font=\small\ttfamily
+]
+
+\tikzstyle{core} = [
+  classbox,
+  fill=lightblue,
+  draw=darkblue
+]
+
+\tikzstyle{collaboration} = [
+  classbox,
+  fill=lightgreen,
+  draw=darkgreen
+]
+
+\tikzstyle{lsp} = [
+  classbox,
+  fill=lightyellow,
+  draw=orange
+]
+
+\tikzstyle{signaling} = [
+  classbox,
+  fill=lightcyan,
+  draw=darkcyan
+]
+
+\tikzstyle{service} = [
+  classbox,
+  fill=lightgray,
+  draw=black
+]
+
+\tikzstyle{assoc} = [
+  draw=black,
+  ->,
+  line width=1.5pt
+]
+
+\tikzstyle{inherit} = [
+  draw=darkblue,
+  ->,
+  line width=2pt,
+  dashed
+]
+
+\tikzstyle{compose} = [
+  draw=darkgreen,
+  ->,
+  line width=1.5pt,
+  fill=darkgreen,
+  shorten >=3pt
+]
+
+\tikzstyle{groupbox} = [
+  rectangle,
+  draw=black,
+  line width=2pt,
+  dashed,
+  fit=#1,
+  inner sep=0.3cm,
+  label=above:\textbf{#2}
+]
+
+\begin{document}
+
+\begin{tikzpicture}[
+  node distance=2cm,
+  every text node part/.append style={text width=2.3cm, align=center}
+]
+
+% ═════════════════════════════════════════════════════════════════════════
+% COUCHE 1 : CRDT CORE (Cœur Collaboration)
+% ═════════════════════════════════════════════════════════════════════════
+
+\node[core] (CRDTIdentifier) at (0, 6) {
+  \textbf{CRDTIdentifier}
+  \nodepart{second}
+  - timestamp: long
+  - nodeId: String
+  - disambiguator: int
+  \nodepart{third}
+  + compareTo()
+};
+
+\node[core] (CRDTElement) at (3.5, 6) {
+  \textbf{CRDTElement}
+  \nodepart{second}
+  - id: CRDTIdentifier
+  - value: char
+  - deleted: boolean
+  \nodepart{third}
+  + markDeleted()
+  + unmarkDeleted()
+};
+
+\node[core] (CRDTOperation) at (7, 6) {
+  \textbf{CRDTOperation}
+  \nodepart{second}
+  - type: Type
+  - id: CRDTIdentifier
+  - content: char
+  - leftId, rightId
+  \nodepart{third}
+  + insert()
+  + delete()
+};
+
+\node[core] (CRDTDocument) at (2, 3.5) {
+  \textbf{CRDTDocument}
+  \nodepart{second}
+  - documentId: String
+  - elements: SortedMap
+  - logicalClock: long
+  \nodepart{third}
+  + insert()
+  + delete()
+  + applyRemoteOp()
+};
+
+\node[core] (CRDTEngine) at (5, 3.5) {
+  \textbf{CRDTEngine}
+  \nodepart{second}
+  - nodeId: String
+  - documents: Map
+  - pendingOps: Queue
+  \nodepart{third}
+  + insertCharacter()
+  + applyRemote()
+  + mergeDocuments()
+};
+
+% Liaisons CRDT
+\draw[assoc] (CRDTIdentifier) -- (CRDTElement) node[midway,above,font=\tiny] {comprises};
+\draw[assoc] (CRDTOperation) -- (CRDTIdentifier) node[midway,above,font=\tiny] {utilise};
+\draw[compose] (CRDTDocument) -- (CRDTElement) node[midway,left,font=\tiny] {contient};
+\draw[compose] (CRDTEngine) -- (CRDTDocument) node[midway,above,font=\tiny] {gère};
+
+% ═════════════════════════════════════════════════════════════════════════
+% COUCHE 2 : COLLABORATION
+% ═════════════════════════════════════════════════════════════════════════
+
+\node[collaboration] (CollaborationEngine) at (1, 0.5) {
+  \textbf{CollaborationEngine}
+  \nodepart{second}
+  - crdt: CRDTEngine
+  - webrtc: WebRTC
+  - permission: Permission
+  \nodepart{third}
+  + syncDocument()
+  + broadcastChange()
+};
+
+\node[collaboration] (PermissionManager) at (4, 0.5) {
+  \textbf{PermissionManager}
+  \nodepart{second}
+  - permissions: Map
+  - users: List
+  \nodepart{third}
+  + grantAccess()
+  + revokeAccess()
+};
+
+\node[collaboration] (WebRTCCallManager) at (7, 0.5) {
+  \textbf{WebRTCCallManager}
+  \nodepart{second}
+  - connections: Map
+  - iceBuffer: Queue
+  - heartbeat: Manager
+  \nodepart{third}
+  + establishCall()
+  + closeCall()
+};
+
+\node[collaboration] (ClientPresenceManager) at (10, 0.5) {
+  \textbf{ClientPresenceManager}
+  \nodepart{second}
+  - presences: Map
+  - cursors: Map
+  \nodepart{third}
+  + updatePresence()
+  + syncCursor()
+};
+
+% Liaisons Collaboration
+\draw[compose] (CollaborationEngine) -- (CRDTEngine) 
+  node[midway,above,font=\tiny] {uses};
+\draw[assoc] (CollaborationEngine) -- (PermissionManager)
+  node[midway,above,font=\tiny] {manages};
+\draw[assoc] (CollaborationEngine) -- (WebRTCCallManager)
+  node[midway,above,font=\tiny] {controls};
+
+% ═════════════════════════════════════════════════════════════════════════
+% COUCHE 3 : LSP BRIDGE
+% ═════════════════════════════════════════════════════════════════════════
+
+\node[lsp] (DocumentReplicaStore) at (0, -3) {
+  \textbf{DocumentReplicaStore}
+  \nodepart{second}
+  - crdt: CRDTEngine
+  - docs: Map
+  \nodepart{third}
+  + toRemoteOps()
+  + applyRemoteOps()
+};
+
+\node[lsp] (LspBridgeSession) at (3, -3) {
+  \textbf{LspBridgeSession}
+  \nodepart{second}
+  - sessionId: String
+  - replica: Store
+  - handlers: Map
+  \nodepart{third}
+  + handleDidChange()
+  + publishDiagnostics()
+};
+
+\node[lsp] (SyncServerAdapter) at (6, -3) {
+  \textbf{SyncServerAdapter}
+  \nodepart{second}
+  - lspProcess: Process
+  - bridge: LspBridge
+  \nodepart{third}
+  + startLsp()
+  + forwardMessages()
+};
+
+\node[lsp] (LspProcessManager) at (9, -3) {
+  \textbf{LspProcessManager}
+  \nodepart{second}
+  - process: Process
+  - config: Properties
+  \nodepart{third}
+  + launchProcess()
+  + terminateProcess()
+};
+
+% Liaisons LSP
+\draw[compose] (DocumentReplicaStore) -- (CRDTEngine)
+  node[midway,right,font=\tiny] {wraps};
+\draw[compose] (LspBridgeSession) -- (DocumentReplicaStore)
+  node[midway,above,font=\tiny] {uses};
+\draw[assoc] (SyncServerAdapter) -- (LspProcessManager)
+  node[midway,above,font=\tiny] {manages};
+
+% ═════════════════════════════════════════════════════════════════════════
+% COUCHE 4 : SIGNALING & NETWORKING
+% ═════════════════════════════════════════════════════════════════════════
+
+\node[signaling] (SignalingWebSocketServer) at (1, -6) {
+  \textbf{SignalingServer}
+  \nodepart{second}
+  - rooms: Map
+  - users: Map
+  - clients: List
+  \nodepart{third}
+  + handleConnection()
+  + broadcastMessage()
+};
+
+\node[signaling] (RoomManager) at (4.5, -6) {
+  \textbf{RoomManager}
+  \nodepart{second}
+  - rooms: Map
+  - maxCapacity: int
+  \nodepart{third}
+  + createRoom()
+  + addUser()
+  + removeUser()
+};
+
+\node[signaling] (Room) at (7.5, -6) {
+  \textbf{Room}
+  \nodepart{second}
+  - roomId: String
+  - users: Set
+  - messages: Queue
+  \nodepart{third}
+  + broadcast()
+  + addMember()
+};
+
+\node[signaling] (UserSession) at (10.5, -6) {
+  \textbf{UserSession}
+  \nodepart{second}
+  - sessionId: String
+  - userId: String
+  - timestamp: long
+  \nodepart{third}
+  + isActive()
+  + disconnect()
+};
+
+% Liaisons Signaling
+\draw[compose] (SignalingWebSocketServer) -- (RoomManager)
+  node[midway,above,font=\tiny] {manages};
+\draw[compose] (RoomManager) -- (Room)
+  node[midway,above,font=\tiny] {creates};
+\draw[assoc] (Room) -- (UserSession)
+  node[midway,right,font=\tiny] {contains};
+
+% ═════════════════════════════════════════════════════════════════════════
+% COUCHE 5 : APPLICATION & SERVICES
+% ═════════════════════════════════════════════════════════════════════════
+
+\node[service] (DistributedIDEApp) at (2, -9.5) {
+  \textbf{DistributedIDEApp}
+  \nodepart{second}
+  - workspace: WorkspaceManager
+  - collaboration: Collab.
+  - theme: ThemeManager
+  \nodepart{third}
+  + start()
+  + initServices()
+};
+
+\node[service] (WorkspaceManager) at (5.5, -9.5) {
+  \textbf{WorkspaceManager}
+  \nodepart{second}
+  - projects: Map
+  - currentProject: Project
+  - files: List
+  \nodepart{third}
+  + openProject()
+  + saveFile()
+  + closeProject()
+};
+
+\node[service] (FileService) at (9, -9.5) {
+  \textbf{FileService}
+  \nodepart{second}
+  - workspace: Path
+  - cache: Map
+  \nodepart{third}
+  + readFile()
+  + writeFile()
+  + scanDirectory()
+};
+
+\node[service] (ProjectExecutionManager) at (2, -12.5) {
+  \textbf{ProjectExecutor}
+  \nodepart{second}
+  - executors: Map
+  - processes: List
+  \nodepart{third}
+  + executeProject()
+  + stopExecution()
+};
+
+\node[service] (GitService) at (5, -12.5) {
+  \textbf{GitService}
+  \nodepart{second}
+  - repo: Repository
+  - branches: List
+  \nodepart{third}
+  + commit()
+  + push()
+  + pull()
+};
+
+\node[service] (LocalTerminalService) at (8, -12.5) {
+  \textbf{LocalTerminal}
+  \nodepart{second}
+  - process: Process
+  - buffer: Queue
+  \nodepart{third}
+  + executeCommand()
+  + readOutput()
+};
+
+\node[service] (GlobalExceptionHandler) at (11, -12.5) {
+  \textbf{ExceptionHandler}
+  \nodepart{second}
+  - handlers: Map
+  - logger: Logger
+  \nodepart{third}
+  + handleException()
+  + logError()
+};
+
+% Liaisons Services
+\draw[assoc] (DistributedIDEApp) -- (WorkspaceManager)
+  node[midway,above,font=\tiny] {manages};
+\draw[assoc] (DistributedIDEApp) -- (CollaborationEngine)
+  node[midway,left,font=\tiny] {initializes};
+\draw[compose] (WorkspaceManager) -- (FileService)
+  node[midway,above,font=\tiny] {uses};
+\draw[assoc] (WorkspaceManager) -- (ProjectExecutionManager)
+  node[midway,above,font=\tiny] {executes};
+
+% ═════════════════════════════════════════════════════════════════════════
+% GROUPES PAR COUCHE
+% ═════════════════════════════════════════════════════════════════════════
+
+\node[draw=darkblue, line width=2pt, dashed, 
+       fit=(CRDTIdentifier)(CRDTElement)(CRDTOperation)(CRDTDocument)(CRDTEngine),
+       label=above:\textbf{CRDT Core}] {};
+
+\node[draw=darkgreen, line width=2pt, dashed,
+       fit=(CollaborationEngine)(PermissionManager)(WebRTCCallManager)(ClientPresenceManager),
+       label=above:\textbf{Collaboration Layer}] {};
+
+\node[draw=orange, line width=2pt, dashed,
+       fit=(DocumentReplicaStore)(LspBridgeSession)(SyncServerAdapter)(LspProcessManager),
+       label=above:\textbf{LSP Bridge}] {};
+
+\node[draw=darkcyan, line width=2pt, dashed,
+       fit=(SignalingWebSocketServer)(RoomManager)(Room)(UserSession),
+       label=above:\textbf{Signaling Network}] {};
+
+\node[draw=black, line width=2pt, dashed,
+       fit=(DistributedIDEApp)(WorkspaceManager)(FileService),
+       label=above:\textbf{Application Layer}] {};
+
+\node[draw=black, line width=2pt, dashed,
+       fit=(ProjectExecutionManager)(GitService)(LocalTerminalService)(GlobalExceptionHandler),
+       label=above:\textbf{Support Services}] {};
+
+% ═════════════════════════════════════════════════════════════════════════
+% LÉGENDE
+% ═════════════════════════════════════════════════════════════════════════
+
+\node[draw=none, below right] at (-11, -14) {
+  \small
+  \begin{tabular}{ll}
+    \tikz[baseline=-0.15em] \node[core, scale=0.5] {}; & CRDT Core \\
+    \tikz[baseline=-0.15em] \node[collaboration, scale=0.5] {}; & Collaboration \\
+    \tikz[baseline=-0.15em] \node[lsp, scale=0.5] {}; & LSP Bridge \\
+    \tikz[baseline=-0.15em] \node[signaling, scale=0.5] {}; & Signaling \\
+    \tikz[baseline=-0.15em] \node[service, scale=0.5] {}; & Services \\
+  \end{tabular}
+};
+
+\node[draw=none, below right] at (4, -14) {
+  \small
+  \begin{tabular}{ll}
+    \tikz[baseline=-0.15em] \draw[assoc] (0,0) -- (0.2,0); & Association \\
+    \tikz[baseline=-0.15em] \draw[compose] (0,0.1) -- (0.2,0.1); & Composition \\
+    \tikz[baseline=-0.15em] \draw[inherit] (0,0.2) -- (0.2,0.2); & Inheritance \\
+  \end{tabular}
+};
+
+\end{tikzpicture}
+
+\end{document}
+
+
+════════════════════════════════════════════════════════════════════════════════
+
+EXPLICATION DU DIAGRAMME
+════════════════════════════════════════════════════════════════════════════════
+
+1. COUCHE CRDT CORE (Bleu)
+   ────────────────────────────────────────────────────────────────────────
+   CRDTIdentifier
+   ├─ Représente chaque changement de manière unique
+   ├─ Triple (timestamp, nodeId, disambiguator)
+   └─ Garantit ordre total via compareTo()
+
+   CRDTElement
+   ├─ Enveloppe un caractère avec ses métadonnées
+   ├─ Stocke deletion flag (soft delete)
+   └─ Comparable par son identifiant
+
+   CRDTOperation
+   ├─ Représente une opération atomique (INSERT/DELETE)
+   ├─ Immutable → Serializable
+   └─ Enregistre leftId/rightId pour positionnement
+
+   CRDTDocument
+   ├─ Stockage principal : SortedMap<CRDTIdentifier, CRDTElement>
+   ├─ O(log n) insertion/suppression
+   ├─ Horloge logique pour causalité
+   └─ Historique des opérations (undo/redo)
+
+   CRDTEngine
+   ├─ Orchestrateur multi-documents
+   ├─ Queue des opérations en attente
+   ├─ Listeners pour notifications
+   └─ applyRemoteOperation() = cœur de la convergence
+
+
+2. COUCHE COLLABORATION (Vert)
+   ────────────────────────────────────────────────────────────────────────
+   CollaborationEngine
+   ├─ Intègre CRDTEngine pour synchronisation
+   ├─ Coordonne PermissionManager, WebRTC, Presence
+   └─ Synchronise les changements entre réplicas
+
+   PermissionManager
+   ├─ Contrôle d'accès par utilisateur
+   ├─ Gère granularité des permissions (lecture/écriture)
+   └─ Vérifie autorisation avant opération
+
+   WebRTCCallManager
+   ├─ Établit connexions P2P WebRTC
+   ├─ Gère ICE candidates
+   ├─ Heartbeat pour détection déconnexion
+   └─ Reconnexion avec exponential backoff
+
+   ClientPresenceManager
+   ├─ Suivi des utilisateurs actifs
+   ├─ Synchronisation des curseurs en temps réel
+   ├─ États utilisateur : editing, offline, etc.
+   └─ Notifications d'arrivée/départ
+
+
+3. COUCHE LSP BRIDGE (Jaune)
+   ────────────────────────────────────────────────────────────────────────
+   DocumentReplicaStore
+   ├─ Wraps CRDTEngine pour chaque document
+   ├─ Convertit SyncMessage → CRDTOperation
+   └─ Applique opérations distantes via CRDT
+
+   LspBridgeSession
+   ├─ Session LSP par utilisateur
+   ├─ HandlerdidChange → DocumentReplicaStore
+   └─ Publie diagnostics/hover info via LSP protocol
+
+   SyncServerAdapter
+   ├─ Lance processus LSP externe
+   ├─ Relie processus LSP avec bridge
+   ├─ Gère stdin/stdout du serveur LSP
+   └─ Forwarder messages bidirectionnels
+
+   LspProcessManager
+   ├─ Lifecycle du processus LSP
+   ├─ Capture erreurs/sortie standard
+   └─ Graceful shutdown + force kill
+
+
+4. COUCHE SIGNALING & NETWORKING (Cyan)
+   ────────────────────────────────────────────────────────────────────────
+   SignalingWebSocketServer
+   ├─ Serveur WebSocket central
+   ├─ Gère connexions des clients
+   ├─ Route messages de signaling
+   └─ Broadcast/unicast
+
+   RoomManager
+   ├─ Gère création/suppression de rooms
+   ├─ Ajoute/retire utilisateurs
+   └─ Maintient limite de capacity
+
+   Room
+   ├─ Représente session collaborative
+   ├─ Liste des utilisateurs membres
+   ├─ File d'attente des messages
+   └─ Broadcast interne
+
+   UserSession
+   ├─ Représente session utilisateur unique
+   ├─ timestamp pour détection inactivité
+   └─ Async cleanup après disconnection
+
+
+5. COUCHE APPLICATION (Gris)
+   ────────────────────────────────────────────────────────────────────────
+   DistributedIDEApp
+   ├─ Classe main, extends Application (JavaFX)
+   ├─ Initialise tous les services
+   ├─ Lance scène principale
+   └─ Gère lifecycle application
+
+   WorkspaceManager
+   ├─ Gère dossier workspace
+   ├─ Liste des projects
+   ├─ Projet actuellement ouvert
+   └─ Coordination FileService, GitService
+
+   FileService
+   ├─ I/O disque abstrait
+   ├─ Cache des fichiers ouverts
+   ├─ Scanning recursive du workspace
+   └─ Détection changements externals
+
+
+6. SUPPORT SERVICES (Gris)
+   ────────────────────────────────────────────────────────────────────────
+   ProjectExecutionManager
+   ├─ Exécuteurs par langage (Java, Python, etc.)
+   ├─ Gère processus execution
+   ├─ Capture stdout/stderr
+   └─ Nettoyage après termination
+
+   GitService
+   ├─ Abstraction JGit
+   ├─ Commit/Push/Pull
+   ├─ Branch management
+   └─ Merge avec CRDT sync
+
+   LocalTerminalService
+   ├─ Processus système local
+   ├─ Ligne de commande arbitraire
+   ├─ Buffer sortie
+   └─ Signal handling
+
+   GlobalExceptionHandler
+   ├─ Capture exception globale
+   ├─ Logging centralisé
+   ├─ Dialog utilisateur
+   └─ Graceful degradation
+
+
+════════════════════════════════════════════════════════════════════════════════
+
+FLUX DE DONNÉES PRINCIPAL
+════════════════════════════════════════════════════════════════════════════════
+
+1. ÉDITION LOCALE:
+   User types → DistributedIDEApp → WorkspaceManager → FileService
+   ↓
+   → CollaborationEngine → CRDTEngine.insert()
+   ↓
+   → CRDTDocument (SortedMap)
+   ↓
+   → pendingOperations (queue)
+
+2. SYNCHRONISATION:
+   pendingOperations → SignalingServer (WebSocket)
+   ↓
+   → Network → RoomManager.broadcast()
+   ↓
+   → UserSession (autres réplicas)
+
+3. APPLICATION DISTANTE:
+   Remote CRDTOperation → CRDTEngine.applyRemoteOperation()
+   ↓
+   → Idempotente + Commutative
+   ↓
+   → SortedMap (ordre automatique)
+   ↓
+   → LSP Bridge (si change LSP)
+   ↓
+   → LspBridgeSession → DocumentReplicaStore
+   ↓
+   → Diagnostics/Suggestions
+
+4. SUPPORT LSP:
+   File change → LspBridgeSession.handleDidChange()
+   ↓
+   → DocumentReplicaStore.toRemoteOps()
+   ↓
+   → Remote LSP Server (process)
+   ↓
+   → LspProcessManager → SyncServerAdapter
+   ↓
+   → Hover info / Completions
+
+
+════════════════════════════════════════════════════════════════════════════════
+
+VARIABLES CRITIQUES PAR CLASSE
+════════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────┬──────────────────────────────────────────────┐
+│ Classe                  │ Variable Critique                            │
+├─────────────────────────┼──────────────────────────────────────────────┤
+│ CRDTIdentifier          │ timestamp, nodeId (unicité globale)         │
+│ CRDTElement             │ id, deleted (soft delete)                   │
+│ CRDTOperation           │ id, type, leftId, rightId (position)        │
+│ CRDTDocument            │ elements (SortedMap), logicalClock          │
+│ CRDTEngine              │ documents, pendingOperations (sync queue)   │
+├─────────────────────────┼──────────────────────────────────────────────┤
+│ CollaborationEngine     │ crdt, webrtc, permission (orchestration)    │
+│ WebRTCCallManager       │ connections, iceBuffer (P2P)                │
+│ ClientPresenceManager   │ presences, cursors (real-time)              │
+│ PermissionManager       │ permissions (access control)                │
+├─────────────────────────┼──────────────────────────────────────────────┤
+│ DocumentReplicaStore    │ crdt (par document)                         │
+│ LspBridgeSession        │ sessionId, replica (document-specific)      │
+│ SyncServerAdapter       │ lspProcess (lifecycle)                      │
+│ LspProcessManager       │ process, config (subprocess)                │
+├─────────────────────────┼──────────────────────────────────────────────┤
+│ SignalingWebSocketServer│ rooms, clients (réseau)                     │
+│ RoomManager             │ rooms (session management)                  │
+│ Room                    │ roomId, users (collaboration room)          │
+│ UserSession             │ sessionId, timestamp (lifecycle)            │
+├─────────────────────────┼──────────────────────────────────────────────┤
+│ DistributedIDEApp       │ workspace, collaboration, theme             │
+│ WorkspaceManager        │ projects, currentProject (state)            │
+│ FileService             │ workspace, cache (I/O)                      │
+│ ProjectExecutionManager │ executors, processes (subprocess)           │
+└─────────────────────────┴──────────────────────────────────────────────┘
+
+
+════════════════════════════════════════════════════════════════════════════════
+
+LIAISONS ENTRE COUCHES
+════════════════════════════════════════════════════════════════════════════════
+
+Composition (forte) :
+─────────────────────
+• CRDTEngine owns CRDTDocument
+  → Si CRDTEngine mourir, documents disparaissent
+
+• CollaborationEngine owns WebRTCCallManager, PermissionManager
+  → Relation 1:1, lifecycle liés
+
+• WorkspaceManager owns FileService
+  → FileService dépend WorkspaceManager
+
+• Room owns UserSession
+  → Utilisateurs font partie d'une room
+
+• SignalingWebSocketServer owns RoomManager
+  → Gestion des rooms = responsibility serveur
+
+
+Association (faible) :
+──────────────────────
+• CRDTDocument references CRDTIdentifier / CRDTElement / CRDTOperation
+  → Utilise mais ne crée pas nécessairement
+
+• CollaborationEngine uses CRDTEngine
+  → Wrap pour collaboration, mais CRDTEngine peut exister seul
+
+• DistributedIDEApp uses CollaborationEngine
+  → Dépendance optionnelle (mode offline possible)
+
+• LspBridgeSession references DocumentReplicaStore
+  → Adaptateurpattern pour CRDT
+
+
+════════════════════════════════════════════════════════════════════════════════
+FIN DIAGRAMME UML
+════════════════════════════════════════════════════════════════════════════════

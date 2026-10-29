@@ -1,0 +1,842 @@
+════════════════════════════════════════════════════════════════════════════════
+GESTION DE CONNEXION WEBSOCKET - CODE COMPLET DU PROJET DISTRIBUTED IDE
+════════════════════════════════════════════════════════════════════════════════
+
+Ce document regroupe le code complet de gestion WebSocket utilisé dans le projet
+Distributed IDE. Il y a deux types de handlers WebSocket :
+
+1. LspWebSocketHandler : Gère les connexions clients (Éditeur → Serveur)
+2. SyncServerMessageHandler : Reçoit les messages du serveur sync (Serveur → Client)
+
+════════════════════════════════════════════════════════════════════════════════
+PARTIE 1 : LspWebSocketHandler - RÉCEPTION DES CLIENTS
+════════════════════════════════════════════════════════════════════════════════
+
+Fichier: /lsp-bridge/src/main/java/com/distributed_ide/lsp_bridge/websocket/LspWebSocketHandler.java
+
+DESCRIPTION:
+- Accepte les connexions WebSocket entrantes des clients éditeur
+- Gère l'initialisation des sessions LSP (Language Server Protocol)
+- Valide les messages JSON pour prévenir les attaques DoS
+- Relaie les messages vers les sessions LSP appropriées
+- Notifie le serveur sync pour les opérations collaboratives
+
+════════════════════════════════════════════════════════════════════════════════
+
+IMPORTS ESSENTIELS:
+    import org.springframework.web.socket.WebSocketSession;
+    import org.springframework.web.socket.TextMessage;
+    import org.springframework.web.socket.handler.TextWebSocketHandler;
+    import org.springframework.web.socket.CloseStatus;
+    import com.fasterxml.jackson.databind.JsonNode;
+    import com.fasterxml.jackson.databind.ObjectMapper;
+
+════════════════════════════════════════════════════════════════════════════════
+
+CODE COMPLET - LspWebSocketHandler.java:
+
+────────────────────────────────────────────────────────────────────────────────
+1. DÉCLARATION DE CLASSE ET CONFIGURATION
+────────────────────────────────────────────────────────────────────────────────
+
+public class LspWebSocketHandler extends TextWebSocketHandler {
+
+    private static final Logger LOG = LoggerFactory.getLogger(LspWebSocketHandler.class);
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+    
+    // Sécurité : Limiter la taille des messages pour éviter les attaques DoS
+    private static final int MAX_MESSAGE_SIZE = 10 * 1024 * 1024; // 10 MB
+    private static final int MAX_JSON_DEPTH = 50; // Prévenir les JSON imbriqués DoS
+
+    private final LspSessionRegistry sessionRegistry;
+    private final DocumentToSessionRegistry documentToSessionRegistry;
+    private final Optional<SyncServerAdapter> syncAdapter;
+    private final Map<String, SessionInfo> sessionInfos = new ConcurrentHashMap<>();
+
+    // Constructeurs
+    public LspWebSocketHandler(LspSessionRegistry sessionRegistry) {
+        this(sessionRegistry, null, null);
+    }
+
+    public LspWebSocketHandler(LspSessionRegistry sessionRegistry,
+                               DocumentToSessionRegistry documentToSessionRegistry,
+                               SyncServerAdapter syncAdapter) {
+        this.sessionRegistry = sessionRegistry;
+        this.documentToSessionRegistry = documentToSessionRegistry != null ? 
+                                        documentToSessionRegistry : 
+                                        new DocumentToSessionRegistry();
+        this.syncAdapter = Optional.ofNullable(syncAdapter);
+    }
+
+────────────────────────────────────────────────────────────────────────────────
+2. ÉTABLISSEMENT DE CONNEXION - afterConnectionEstablished()
+────────────────────────────────────────────────────────────────────────────────
+
+    @Override
+    public void afterConnectionEstablished(WebSocketSession session) {
+        sessionInfos.put(session.getId(), new SessionInfo(null, null, null));
+        LOG.info("WebSocket connected: {}", session.getId());
+    }
+
+DESCRIPTION:
+- Appelé des que la connexion WebSocket est établie
+- Initialise les infos de session dans la map ConcurrentHashMap
+- Sessions ne sont pas encore associées à un LSP (sessionKey = null)
+
+────────────────────────────────────────────────────────────────────────────────
+3. TRAITEMENT DES MESSAGES - handleTextMessage()
+────────────────────────────────────────────────────────────────────────────────
+
+    @Override
+    protected void handleTextMessage(WebSocketSession session, TextMessage message) 
+            throws Exception {
+        
+        String payload = message.getPayload();
+        String sessionId = session.getId();
+        SessionInfo info = sessionInfos.get(sessionId);
+        
+        if (info == null) return;
+
+        // VALIDATION 1 : Contrôler la taille du message
+        if (payload.length() > MAX_MESSAGE_SIZE) {
+            LOG.warn("Message size limit exceeded: {} bytes > {} bytes for session {}", 
+                    payload.length(), MAX_MESSAGE_SIZE, sessionId);
+            sendError(session, "Message size exceeds limit (" + MAX_MESSAGE_SIZE + " bytes)");
+            return;
+        }
+
+        try {
+            // PARSING : Convertir le texte en JSON
+            JsonNode root = MAPPER.readTree(payload);
+            if (!root.isObject()) {
+                sendError(session, "Invalid JSON");
+                return;
+            }
+
+            JsonNode method = root.get("method");
+            JsonNode params = root.get("params");
+
+            // MESSAGE 1 : INITIALISATION - Premier message du client
+            if (method != null && "init".equals(method.asText()) && params != null) {
+                
+                String language = params.has("language") ? 
+                                 params.get("language").asText() : "java";
+                String rootUri = params.has("rootUri") ? 
+                                params.get("rootUri").asText() : null;
+                
+                // Créer ou récupérer la session LSP
+                LspServerType type = parseLanguage(language);
+                LspBridgeSession bridge = sessionRegistry.getOrCreate(type, rootUri);
+                String sessionKey = LspSessionRegistry.sessionKeyFor(type, rootUri);
+                
+                // Enregistrer ce client auprès de la session LSP
+                bridge.addClient(sessionId, new BridgeSessionClient(session));
+                sessionInfos.put(sessionId, new SessionInfo(sessionKey, type, rootUri));
+                
+                LOG.info("Client {} init: language={}", sessionId, language);
+                return;
+            }
+
+            // VÉRIFIER : Le client a-t-il envoyé init d'abord ?
+            if (info.sessionKey == null) {
+                sendError(session, 
+                    "Send init first: {\"method\":\"init\",\"params\":{\"language\":\"java|python|typescript\",\"rootUri\":\"file:///...\"}}");
+                return;
+            }
+
+            // REGISTRER les opérations de document (didOpen/didClose)
+            registerDocumentOpenClose(root, info);
+
+            // NOTIFIER le serveur sync si c'est un didOpen
+            notifySyncDocumentIfDidOpen(root, info);
+
+            // RELAYER le message à la session LSP appropriée
+            LspBridgeSession bridge = sessionRegistry.getOrCreate(info.type, info.rootUri);
+            bridge.forwardFromClient(sessionId, payload);
+
+        } catch (Exception e) {
+            String msg = e.getMessage() != null ? e.getMessage() : e.toString();
+            
+            if (e instanceof RuntimeException && msg.startsWith("Start LSP failed:")) {
+                LOG.warn("{}", msg);
+                sendError(session, msg);
+                return;
+            }
+            
+            LOG.error("Handle message error", e);
+            sendError(session, msg);
+        }
+    }
+
+────────────────────────────────────────────────────────────────────────────────
+4. REGISTRER LES DOCUMENTS - registerDocumentOpenClose()
+────────────────────────────────────────────────────────────────────────────────
+
+    private void registerDocumentOpenClose(JsonNode root, SessionInfo info) {
+        if (info.sessionKey == null) return;
+        
+        JsonNode method = root.get("method");
+        if (method == null) return;
+        
+        JsonNode params = root.get("params");
+        JsonNode textDoc = params != null && params.has("textDocument") ? 
+                          params.get("textDocument") : null;
+        String uri = textDoc != null && textDoc.has("uri") ? 
+                    textDoc.get("uri").asText(null) : null;
+        
+        if (uri == null) return;
+
+        if ("textDocument/didOpen".equals(method.asText())) {
+            documentToSessionRegistry.documentOpened(uri, info.sessionKey);
+        } else if ("textDocument/didClose".equals(method.asText())) {
+            documentToSessionRegistry.documentClosed(uri, info.sessionKey);
+        }
+    }
+
+DESCRIPTION:
+- Enregistre les documents ouverts/fermés pour le routage sync
+- Permet au serveur sync de connaître quel client le regarde
+- Essentiellement un système de publication-abonnement (Pub-Sub)
+
+────────────────────────────────────────────────────────────────────────────────
+5. NOTIFIER LE SERVEUR SYNC - notifySyncDocumentIfDidOpen()
+────────────────────────────────────────────────────────────────────────────────
+
+    private void notifySyncDocumentIfDidOpen(JsonNode root, SessionInfo info) {
+        JsonNode method = root.get("method");
+        
+        if (method == null || !"textDocument/didOpen".equals(method.asText())) {
+            return;
+        }
+
+        syncAdapter.filter(SyncServerAdapter::isEnabled).ifPresent(adapter -> {
+            JsonNode params = root.get("params");
+            
+            if (params != null && params.has("textDocument") && 
+                params.get("textDocument").has("uri")) {
+                
+                String uri = params.get("textDocument").get("uri").asText();
+                adapter.documentOpened(uri);  // Notifier le serveur sync
+            }
+        });
+    }
+
+DESCRIPTION:
+- Quand un client ouvre un document, le signaler au serveur sync
+- Permet au serveur sync de diffuser les opérations collaboratives
+- Optionnel si syncAdapter n'est pas activé
+
+────────────────────────────────────────────────────────────────────────────────
+6. FERMETURE DE CONNEXION - afterConnectionClosed()
+────────────────────────────────────────────────────────────────────────────────
+
+    @Override
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+        String sessionId = session.getId();
+        SessionInfo info = sessionInfos.remove(sessionId);
+        
+        if (info != null && info.sessionKey != null) {
+            documentToSessionRegistry.removeSession(info.sessionKey);
+            sessionRegistry.removeClient(info.sessionKey, sessionId);
+        }
+        
+        LOG.info("WebSocket closed: {}", sessionId);
+    }
+
+DESCRIPTION:
+- Appelé quand la connexion WebSocket se ferme
+- Nettoie les ressources associées à cette session
+- Supprime de la registre et notifie le gestionnaire de documents
+
+────────────────────────────────────────────────────────────────────────────────
+7. GESTION DES ERREURS - handleTransportError()
+────────────────────────────────────────────────────────────────────────────────
+
+    @Override
+    public void handleTransportError(WebSocketSession session, Throwable exception) {
+        LOG.error("Transport error in session {}: {}", session.getId(), exception.getMessage());
+        
+        // Gestion gracieuse des erreurs de paiement
+        String errorMsg = exception.getMessage() != null ? 
+                         exception.getMessage().toLowerCase() : "";
+        
+        if (errorMsg.contains("payload") || errorMsg.contains("size") || 
+            errorMsg.contains("too large")) {
+            try {
+                sendError(session, "Message payload too large. Maximum size: " + 
+                         MAX_MESSAGE_SIZE + " bytes");
+                LOG.warn("Client {} sent oversized message, notified and continuing", 
+                        session.getId());
+            } catch (Exception e) {
+                LOG.error("Failed to notify client of size limit", e);
+            }
+        }
+    }
+
+DESCRIPTION:
+- Gère les erreurs de transport WebSocket
+- Détecte les messages trop volumineux et notifie le client
+- Permet une récupération gracieuse sans fermer la connexion
+
+────────────────────────────────────────────────────────────────────────────────
+8. UTILITAIRES - Helper Methods
+────────────────────────────────────────────────────────────────────────────────
+
+    private static LspServerType parseLanguage(String lang) {
+        if (lang == null) return LspServerType.JAVA;
+        switch (lang.toLowerCase()) {
+            case "python": case "py": 
+                return LspServerType.PYTHON;
+            case "typescript": case "ts": 
+                return LspServerType.TYPESCRIPT;
+            default: 
+                return LspServerType.JAVA;
+        }
+    }
+
+    private static void sendError(WebSocketSession session, String msg) {
+        try {
+            session.sendMessage(new TextMessage(
+                "{\"error\":\"" + msg.replace("\"", "\\\"") + "\"}"
+            ));
+        } catch (Exception e) {
+            LOG.warn("Send error failed", e);
+        }
+    }
+
+────────────────────────────────────────────────────────────────────────────────
+9. CLASSE INTERNE - SessionInfo
+────────────────────────────────────────────────────────────────────────────────
+
+    private static final class SessionInfo {
+        final String sessionKey;              // Clé pour identifier la session LSP
+        final LspServerType type;              // Type de serveur (JAVA, PYTHON, TS)
+        final String rootUri;                  // Racine du projet
+
+        SessionInfo(String sessionKey, LspServerType type, String rootUri) {
+            this.sessionKey = sessionKey;
+            this.type = type;
+            this.rootUri = rootUri;
+        }
+    }
+
+DESCRIPTION:
+- Stocke les informations associées à chaque session WebSocket
+- Permet de router rapidement les messages vers la bonne session LSP
+
+────────────────────────────────────────────────────────────────────────────────
+10. CLASSE INTERNE - BridgeSessionClient
+────────────────────────────────────────────────────────────────────────────────
+
+    private static final class BridgeSessionClient implements LspBridgeSession.SessionClient {
+        private final WebSocketSession session;
+
+        BridgeSessionClient(WebSocketSession session) {
+            this.session = session;
+        }
+
+        @Override
+        public void send(String json) {
+            try {
+                if (session.isOpen()) {
+                    session.sendMessage(new TextMessage(json));
+                }
+            } catch (Exception e) {
+                LOG.warn("Send failed", e);
+            }
+        }
+
+        @Override
+        public void sendError(String message) {
+            send("{\"error\":\"" + message.replace("\"", "\\\"") + "\"}");
+        }
+    }
+
+DESCRIPTION:
+- Adapter pour envoyer les réponses LSP au client via WebSocket
+- Vérifie que la session est ouverte avant d'envoyer
+- Gère les exceptions de communication
+
+}
+
+════════════════════════════════════════════════════════════════════════════════
+════════════════════════════════════════════════════════════════════════════════
+
+PARTIE 2 : SyncServerMessageHandler - RÉCEPTION DES MESSAGES SYNC
+════════════════════════════════════════════════════════════════════════════════
+
+Fichier: /lsp-bridge/src/main/java/com/distributed_ide/lsp_bridge/sync/SyncServerMessageHandler.java
+
+DESCRIPTION:
+- C'est un WebSocket CLIENT (pas serveur) qui se connecte au serveur sync
+- Reçoit les opérations collaboratives CRDT (BATCH_OPERATIONS, OPERATION)
+- Traite les messages de manière asynchrone sans bloquer le thread réseau
+- Délègue au callback Consumer<SyncMessage>
+
+════════════════════════════════════════════════════════════════════════════════
+
+CODE COMPLET - SyncServerMessageHandler.java:
+
+    package com.distributed_ide.lsp_bridge.sync;
+
+    import com.distributed_ide.sync.model.SyncMessage;
+    import com.fasterxml.jackson.databind.ObjectMapper;
+    import org.slf4j.Logger;
+    import org.slf4j.LoggerFactory;
+    import org.springframework.web.socket.TextMessage;
+    import org.springframework.web.socket.WebSocketSession;
+    import org.springframework.web.socket.handler.TextWebSocketHandler;
+    import java.util.function.Consumer;
+
+    /**
+     * Handler WebSocket client pour recevoir les messages du sync-server.
+     * Délègue les {@link SyncMessage} reçues à un callback (sans bloquer le thread réseau).
+     */
+    public class SyncServerMessageHandler extends TextWebSocketHandler {
+
+        private static final Logger LOG = LoggerFactory.getLogger(SyncServerMessageHandler.class);
+        private static final ObjectMapper MAPPER = new ObjectMapper();
+
+        private final Consumer<SyncMessage> onMessage;
+
+        public SyncServerMessageHandler(Consumer<SyncMessage> onMessage) {
+            this.onMessage = onMessage != null ? onMessage : m -> {};
+        }
+
+        @Override
+        protected void handleTextMessage(WebSocketSession session, TextMessage message) {
+            String payload = message.getPayload();
+            try {
+                SyncMessage msg = MAPPER.readValue(payload, SyncMessage.class);
+                if (msg != null && msg.getType() != null) {
+                    onMessage.accept(msg);  // Déléguer au callback
+                }
+            } catch (Exception e) {
+                LOG.trace("Parse sync message failed: {}", e.getMessage());
+            }
+        }
+
+        @Override
+        public void afterConnectionEstablished(WebSocketSession session) {
+            LOG.debug("Sync-server WebSocket connected");
+        }
+
+        @Override
+        public void handleTransportError(WebSocketSession session, Throwable exception) {
+            LOG.warn("Sync-server transport error: {}", exception.getMessage());
+        }
+    }
+
+════════════════════════════════════════════════════════════════════════════════
+════════════════════════════════════════════════════════════════════════════════
+
+PARTIE 3 : SyncServerAdapter - ORCHESTRATION COMPLÈTE
+════════════════════════════════════════════════════════════════════════════════
+
+Fichier: /lsp-bridge/src/main/java/com/distributed_ide/lsp_bridge/sync/SyncServerAdapter.java
+
+DESCRIPTION:
+- Manage la connexion WebSocket CLIENT vers le serveur sync
+- Envoie DOCUMENT_JOIN/DOCUMENT_LEAVE
+- Reçoit les opérations CRDT et les applique à la réplique locale
+- Traitement asynchrone pour ne pas bloquer le thread WebSocket
+
+════════════════════════════════════════════════════════════════════════════════
+
+CODE COMPLET - SyncServerAdapter.java:
+
+    package com.distributed_ide.lsp_bridge.sync;
+
+    import com.distributed_ide.sync.model.SyncMessage;
+    import com.fasterxml.jackson.databind.ObjectMapper;
+    import org.slf4j.Logger;
+    import org.slf4j.LoggerFactory;
+    import org.springframework.web.socket.TextMessage;
+    import org.springframework.web.socket.WebSocketSession;
+    import org.springframework.web.socket.client.standard.StandardWebSocketClient;
+    import java.io.IOException;
+    import java.util.List;
+    import java.util.UUID;
+    import java.util.concurrent.CompletableFuture;
+    import java.util.concurrent.ExecutorService;
+    import java.util.concurrent.Executors;
+    import java.util.concurrent.atomic.AtomicReference;
+
+    /**
+     * Intégration avec le sync-server : envoie DOCUMENT_JOIN / DOCUMENT_LEAVE et reçoit
+     * BATCH_OPERATIONS / OPERATION pour mettre à jour la réplique CRDT et notifier le LSP (didChange).
+     */
+    public class SyncServerAdapter {
+
+        private static final Logger LOG = LoggerFactory.getLogger(SyncServerAdapter.class);
+        private static final ObjectMapper MAPPER = new ObjectMapper();
+
+        private final String syncServerUrl;
+        private final String nodeId = "lsp-" + UUID.randomUUID().toString().substring(0, 8);
+        private final String clientId = "lsp-" + UUID.randomUUID().toString().substring(0, 8);
+        private final AtomicReference<WebSocketSession> sessionRef = new AtomicReference<>();
+        
+        // Thread pool séparé pour traiter les opérations asynchronement
+        private final ExecutorService asyncExecutor = Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r, "sync-adapter-async");
+            t.setDaemon(true);
+            return t;
+        });
+
+        private DocumentReplicaStore replicaStore;
+        private DocumentContentForwarder contentForwarder;
+
+        public SyncServerAdapter(String syncServerUrl) {
+            this.syncServerUrl = syncServerUrl != null ? syncServerUrl.trim() : "";
+        }
+
+        /**
+         * Configure la réplique CRDT et le forwarder pour envoyer les mises à jour au LSP.
+         * À appeler avant connect() pour activer la réception des opérations.
+         */
+        public void setSyncToLspIntegration(DocumentReplicaStore replicaStore, 
+                                           DocumentContentForwarder contentForwarder) {
+            this.replicaStore = replicaStore;
+            this.contentForwarder = contentForwarder;
+        }
+
+        public boolean isEnabled() {
+            return !syncServerUrl.isEmpty();
+        }
+
+        ────────────────────────────────────────────────────────────────────────────────
+
+        MÉTHODE 1 : connect() - Établir la connexion WebSocket CLIENT
+        ────────────────────────────────────────────────────────────────────────────────
+
+        public void connect() {
+            if (!isEnabled() || sessionRef.get() != null) return;
+            try {
+                // Créer le handler de message
+                SyncServerMessageHandler handler = new SyncServerMessageHandler(this::onSyncMessage);
+                
+                // Créer le client WebSocket et établir la connexion
+                StandardWebSocketClient client = new StandardWebSocketClient();
+                WebSocketSession session = client.doHandshake(handler, syncServerUrl).get();
+                
+                sessionRef.set(session);
+
+                // Envoyer le message INIT
+                SyncMessage init = new SyncMessage(
+                    SyncMessage.MessageType.INIT,
+                    clientId,
+                    null,
+                    nodeId
+                );
+                session.sendMessage(new TextMessage(MAPPER.writeValueAsString(init)));
+                
+                LOG.info("Connected to sync-server");
+            } catch (Exception e) {
+                LOG.warn("Sync-server connect failed: {}", e.getMessage());
+            }
+        }
+
+        ────────────────────────────────────────────────────────────────────────────────
+
+        MÉTHODE 2 : onSyncMessage() - Traiter les opérations reçues (ASYNCHRONE!)
+        ────────────────────────────────────────────────────────────────────────────────
+
+        /**
+         * Reçoit les messages du sync-server. 
+         * Traitement asynchrone pour ne pas bloquer le thread WebSocket.
+         */
+        private void onSyncMessage(SyncMessage msg) {
+            
+            // Filtrer seulement les messages d'opération
+            if (msg.getType() != SyncMessage.MessageType.BATCH_OPERATIONS && 
+                msg.getType() != SyncMessage.MessageType.OPERATION) {
+                return;
+            }
+
+            String documentId = msg.getDocumentId();
+            List<SyncMessage.OperationData> ops = msg.getOperations();
+            
+            if (documentId == null || ops == null || ops.isEmpty()) return;
+            if (replicaStore == null || contentForwarder == null) return;
+
+            // TRAITEMENT ASYNCHRONE : Ne pas bloquer le thread WebSocket
+            CompletableFuture.runAsync(() -> {
+                try {
+                    // Appliquer les opérations à la réplique CRDT locale
+                    String fullText = replicaStore.applyOperationsAndGetText(documentId, ops);
+                    
+                    // Notifier le serveur LSP de la modification
+                    contentForwarder.onDocumentContentChanged(documentId, fullText);
+                    
+                } catch (Exception e) {
+                    LOG.warn("Apply ops / forward failed for doc {}", documentId, e);
+                }
+            }, asyncExecutor);  // Utiliser le thread pool séparé
+        }
+
+        ────────────────────────────────────────────────────────────────────────────────
+
+        MÉTHODE 3 : documentOpened() - Notifier l'ouverture de document
+        ────────────────────────────────────────────────────────────────────────────────
+
+        public void documentOpened(String documentId) {
+            if (!isEnabled() || documentId == null) return;
+            
+            WebSocketSession session = sessionRef.get();
+            
+            if (session == null || !session.isOpen()) {
+                // Si pas connecté, reconnecter
+                connect();
+                session = sessionRef.get();
+            }
+
+            if (session != null && session.isOpen()) {
+                try {
+                    // Envoyer DOCUMENT_JOIN au serveur sync
+                    SyncMessage msg = new SyncMessage(
+                        SyncMessage.MessageType.DOCUMENT_JOIN,
+                        clientId,
+                        documentId,
+                        nodeId
+                    );
+                    session.sendMessage(new TextMessage(MAPPER.writeValueAsString(msg)));
+                    
+                } catch (IOException e) {
+                    LOG.warn("DOCUMENT_JOIN failed", e);
+                }
+            }
+        }
+
+        ────────────────────────────────────────────────────────────────────────────────
+
+        MÉTHODE 4 : documentClosed() - Notifier la fermeture de document
+        ────────────────────────────────────────────────────────────────────────────────
+
+        public void documentClosed(String documentId) {
+            if (!isEnabled() || documentId == null) return;
+            
+            WebSocketSession session = sessionRef.get();
+            
+            if (session != null && session.isOpen()) {
+                try {
+                    // Envoyer DOCUMENT_LEAVE au serveur sync
+                    SyncMessage msg = new SyncMessage(
+                        SyncMessage.MessageType.DOCUMENT_LEAVE,
+                        clientId,
+                        documentId,
+                        nodeId
+                    );
+                    session.sendMessage(new TextMessage(MAPPER.writeValueAsString(msg)));
+                    
+                } catch (IOException e) {
+                    LOG.warn("DOCUMENT_LEAVE failed", e);
+                }
+            }
+        }
+
+        ────────────────────────────────────────────────────────────────────────────────
+
+        MÉTHODE 5 : disconnect() - Fermer la connexion
+        ────────────────────────────────────────────────────────────────────────────────
+
+        public void disconnect() {
+            WebSocketSession s = sessionRef.getAndSet(null);
+            
+            if (s != null && s.isOpen()) {
+                try {
+                    s.close();
+                } catch (IOException e) {
+                    // Ignorer
+                }
+            }
+            
+            asyncExecutor.shutdown();
+        }
+    }
+
+════════════════════════════════════════════════════════════════════════════════
+════════════════════════════════════════════════════════════════════════════════
+
+DIAGRAMME D'ARCHITECTURE WEBSOCKET
+════════════════════════════════════════════════════════════════════════════════
+
+                            ┌─────────────────────────┐
+                            │    CLIENTS ÉDITEUR      │
+                            │   (VS Code, etc)        │
+                            └────────────┬────────────┘
+                                         │
+                          WEBSOCKET SERVER (Spring)
+                                         │
+                        ┌────────────────┴────────────────┐
+                        │                                  │
+                        ▼                                  ▼
+              ┌──────────────────────┐        ┌──────────────────────┐
+              │ LspWebSocketHandler  │        │ Document Registry    │
+              │  - aftersConnected() │        │ (didOpen/didClose)   │
+              │  - handleTextMessage │        │                      │
+              │  - afterClosed()     │        └──────────────────────┘
+              └──────────┬───────────┘                    │
+                         │ init message                   │ notify
+                         ▼                                ▼
+              ┌──────────────────────┐        ┌──────────────────────┐
+              │ LspSessionRegistry   │        │ SyncServerAdapter    │
+              │ (cache des sessions  │        │  (WebSocket CLIENT)  │
+              │  LSP)                │        │                      │
+              └──────────┬───────────┘        └──────────┬───────────┘
+                         │                               │
+                         ▼ forward message               ▼ connect()
+              ┌──────────────────────┐        ┌──────────────────────┐
+              │ LspBridgeSession     │        │ SYNC SERVER          │
+              │ (relie client WebSo- │        │ (Opérations CRDT)    │
+              │  cket + LSP process) │        │                      │
+              └──────────┬───────────┘        └──────────┬───────────┘
+                         │                               │
+                         │ didChange,                    │ BATCH_OPS
+                         │ publishDiag                   │ / OPERATION
+                         ▼                               ▼
+              ┌──────────────────────┐        ┌──────────────────────┐
+              │ LSP PROCESS          │        │ SyncServerMessageHandler
+              │ (Language Server)    │        │ (reçoit async)       │
+              │ (Python, Java, TS)   │        │                      │
+              └──────────────────────┘        └──────────┬───────────┘
+                                                         │
+                                                         ▼
+                                              ┌──────────────────────┐
+                                              │ DocumentReplicaStore │
+                                              │ (CRDT local)         │
+                                              └──────────┬───────────┘
+                                                         │
+                                                         ▼
+                                              ┌──────────────────────┐
+                                              │ ContentForwarder     │
+                                              │ (notifier didChange) │
+                                              └──────────────────────┘
+
+════════════════════════════════════════════════════════════════════════════════
+
+FLUX DE MESSAGES
+════════════════════════════════════════════════════════════════════════════════
+
+CLIENT → SERVER (WebSocket SERVER):
+  
+  1. INIT MESSAGE (Première connexion)
+     {
+       "method": "init",
+       "params": {
+         "language": "java",
+         "rootUri": "file:///project/src"
+       }
+     }
+
+  2. TEXT DOCUMENT MESSAGES (Normal LSP traffic)
+     {
+       "method": "textDocument/didOpen",
+       "params": {
+         "textDocument": {
+           "uri": "file:///project/src/Main.java",
+           "languageId": "java",
+           "version": 1,
+           "text": "public class Main { }"
+         }
+       }
+     }
+
+SERVER → SYNC (WebSocket CLIENT):
+  
+  1. DOCUMENT_JOIN
+     Type: DOCUMENT_JOIN
+     DocumentId: "file:///project/src/Main.java"
+     
+  2. DOCUMENT_LEAVE
+     Type: DOCUMENT_LEAVE
+     DocumentId: "file:///project/src/Main.java"
+
+SYNC → SERVER (WebSocket SERVER):
+  
+  1. BATCH_OPERATIONS (Opérations collaboratives reçues)
+     Type: BATCH_OPERATIONS
+     DocumentId: "file:///project/src/Main.java"
+     Operations: [
+       { type: INSERT, position: 0, content: "p", timestamp: 123, nodeId: "A" },
+       { type: INSERT, position: 1, content: "u", timestamp: 124, nodeId: "B" },
+       ...
+     ]
+
+────────────────────────────────────────────────────────────────────────────────
+
+CYCLE COMPLET D'ÉDITION COLLABORATIVE
+════════════════════════════════════════════════════════════════════════════════
+
+1. UTILISATEUR A ouvre le fichier Main.java
+   ├→ Cliente envoie: {"method":"init", ...}
+   ├→ Cliente envoie: {"method":"textDocument/didOpen", ...}
+   └→ LspWebSocketHandler crée une session LSP
+   
+2. UTILISATEUR A tape du texte localement
+   ├→ Cliente envoie: {"method":"textDocument/didChange", ...}
+   ├→ LSP traite et envoie "publishDiagnostics"
+   └→ Utilisateur A voit les erreurs/suggestions
+   
+3. UTILISATEUR B DISTANT ouvre le même fichier
+   ├→ Serveur sync notifie qu'un autre client est on
+   ├→ Serveur sync envoie l'état actuel à B
+   ├→ B reçoit l'état et l'affiche
+   └→ B peut maintenant éditer en temps réel
+   
+4. UTILISATEUR A tape 'void foo() {'
+   ├→ Générateur les opérations CRDT locales
+   ├→ Envoie au serveur sync via DOCUMENT_EDIT
+   ├→ Serveur sync applique dans sa réplique
+   ├→ Serveur sync broadcast à tous les clients (ex: B)
+   ├→ B reçoit: BATCH_OPERATIONS([INSERT 'v', INSERT 'o', ...])
+   ├→ Handler applyOperationsAndGetText() -> "void foo() {"
+   ├→ ContentForwarder notifie LSP de B -> didChange
+   ├→ LSP de B traite et envoie diagnostics
+   └→ B voit le texte de A en temps réel
+   
+5. UTILISATEUR B tape 'int bar;' AU MÊME TEMPS
+   ├→ Générateur les opérations CRDT locales
+   ├→ Serveur sync reçoit de A: 'void foo() {'
+   ├→ Serveur sync reçoit de B: 'int bar;'
+   ├→ Ordre déterministe: (1,"A",0) > (1,"B",0) -> "void foo() {int bar;}"
+   ├→ Broadcast aux deux: CONVERGENCE résultat identique
+   └→ A et B voient exactement la même chose
+   
+6. L'UN DES UTILISATEURS ferme le document
+   ├→ Envoie: {"method":"textDocument/didClose", ...}
+   ├→ SyncServerAdapter.documentClosed() envoie DOCUMENT_LEAVE
+   ├→ Serveur sync retire ce client de la liste
+   └→ L'autre client continue normalement (optionnel: reçoit didClose)
+
+════════════════════════════════════════════════════════════════════════════════
+
+POINTS CLÉS POUR COMPRENDRE
+════════════════════════════════════════════════════════════════════════════════
+
+1. DEUX TYPES DE WEBSOCKET :
+   - LspWebSocketHandler : Serveur (reçoit des clients éditeur)
+   - SyncServerAdapter : Client (envoie au serveur sync)
+
+2. ASYNCHRONITÉ :
+   - Les messages CRDT sont traités dans asyncExecutor (CompletableFuture)
+   - Ne bloque pas le thread WebSocket
+   - Permet une grande concurrence
+
+3. IDEMPOTENCE :
+   - Les messages peuvent arriver plusieurs fois
+   - applyOperationsAndGetText() gère l'idempotence via CRDT
+   - Pas de duplicatas
+
+4. SÉCURITÉ :
+   - Validation de la taille des messages (MAX_MESSAGE_SIZE = 10MB)
+   - Validation du JSON (ObjectMapper)
+   - Gestion des erreurs de transport
+
+5. SESSION PERSISTENT :
+   - sessionRef utilise AtomicReference pour thread-safety
+   - La session WebSocket reste ouverte tant que necesario
+   - reconnect() automatique si déconnexion
+
+════════════════════════════════════════════════════════════════════════════════
+FIN DU DOCUMENT
+════════════════════════════════════════════════════════════════════════════════

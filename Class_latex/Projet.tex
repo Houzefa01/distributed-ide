@@ -1,0 +1,849 @@
+\documentclass[a4paper,oneside,12pt]{book}
+%\usepackage{graphique}
+\usepackage[frenchb]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{color}
+\usepackage{pgfplots} % Package pour les graphiques
+\usepackage{etex}
+\pgfplotsset{compat=newest}
+\usepackage{pgfplotstable} % Pour la gestion des données
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes, calc}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{lipsum}
+\usepackage{float}
+\usepackage{tikz}
+\usetikzlibrary{positioning, shapes, arrows.meta, calc} % calc nécessaire pour $(A)!0.5!(B)$
+\usepackage{pspicture}
+\usepackage[colorlinks=true]{hyperref}
+\usepackage{titlesec}
+\usepackage{array}
+\usetikzlibrary{positioning, arrows}
+%\usepackage{table}
+%\usepackage{amsthm}
+\usepackage{fancyhdr}
+\usepackage[normalem]{ulem}
+%\usepackage{xlop}
+\usepackage{xlop}
+\usepackage{amsfonts,amsmath,amssymb}
+\usepackage{mathtools}
+%\usepackage[cmyk,svgnames,table]{xcolor}
+\hypersetup{colorlinks,
+	linkcolor=black,
+	citecolor=blue,
+	urlcolor=cyan,
+}
+\usepackage[left=2.5cm, right=2cm, top=2cm, bottom=2.5cm]{geometry} %personnaliser la marge
+\usepackage{multicol}
+\usepackage{tabularx}
+\usepackage{enumerate}
+\usepackage{multirow}
+\usepackage{colortbl}
+\usepackage{longtable}
+\usepackage{pifont}
+\usepackage[french]{nomencl}
+\usepackage{pgf,tikz}
+\usetikzlibrary{arrows}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{dsfont} %pour le caractere utilise $\mathds{text}$ (construction de la fonction indicatrice)
+%\usepackage[cal=boondox,scr=boondoxo]{mathalfa}
+\usepackage{mathrsfs} 	%changement de police
+\usepackage{lmodern}	%changement de police
+\usepackage{aeguill}	%changement de police
+%\usepackage{fourier}	%changement de police
+%\usepackage{mathptmx}	%changement de police
+\usepackage[mathcal,mathbf]{euler} %Euler est une fonte mathématiques, pour l'ecriture cursive (script) en fonte Euler (mode mathématiques
+%\usepackage{oldgerm,yfonts} %fournit la commande \textgoth{texte en gothique} ; l'extension yfonts fournit la commande {\frakfamily texte en gothique}
+
+%Pour utiliser une police Metafont, vous pouvez taper\fontfamily{fonte}\fontseries{graisse}\fontshape{forme}\selectfont ou \fontfamily{cmdh}\fontseries{m}\selectfont
+\usepackage{alltt}   % supporte les caractères spéciaux comme <, >, {, }
+\usepackage{xcolor}
+
+\newenvironment{codeblock}{
+	\begin{alltt}\small\color{black}
+	}{
+\end{alltt}
+}
+\usepackage[thmmarks,amsmath]{ntheorem} %Pour modifier la présentation du théorème
+%\usepackage{url} %Pour écrire correctement une adresse web
+
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstset{
+	basicstyle=\ttfamily\small,
+	breaklines=true,
+	frame=single,
+	rulecolor=\color{black},
+	framesep=10pt
+}
+
+
+\newcommand{\boitecolor}[3]
+{\colorbox{#1}{\textcolor{#2}{#3}}}
+
+\definecolor{vert1}{rgb}{0,0.545,0}
+\definecolor{blue1}{rgb}{0,0,1}
+\definecolor{trust}{rgb}{0.71,0.14,0.07}
+\definecolor{subsection}{rgb}{0.064,0.305,0.545}
+\definecolor{subsubsection}{rgb}{0.03,0.25,0.12}
+\definecolor{rose}{rgb}{0.93,0.15,0.93}
+\definecolor{vert}{rgb}{0.93,0.15,0.93}
+\definecolor{clair}{rgb}{0.99,0.99,0.74}
+\definecolor{def}{rgb}{0.11,0.44,0.91}
+\definecolor{gris1}{gray}{0.85}
+
+%\chapterfont{\color{black}{}}
+%\sectionfont{\color{black}{}}
+%\subsectionfont{\color{black}{}}
+%\subsubsectionfont{\color{black}{}}
+
+\pagestyle{fancyplain}
+%\pagestyle{headings}
+%\renewcommand{\headrulewidth}{1pt}
+\renewcommand{\chaptermark}[1]{\markboth{#1}{#1}}
+\renewcommand{\sectionmark}[1]{\markright{\thesection\ \ #1}}
+\chead[\fancyplain{}{}]{\fancyplain{}{\sl\leftmark}}
+\lhead[\fancyplain{}{\sl\rightmark}]{\fancyplain{}{}}
+%\rhead[\fancyplain{}{\sl Chap \thechapter}]{\fancyplain{}{\sl \color{red}{$\mathfrak{\mbox{}}$}}}
+\fancyfoot[L]{\texttt{\normalsize{ }}}
+\fancyfoot[R]{\normalsize }
+%\newtheorem{definition}{Définition}[section]
+%\newtheorem{exercice}{Exercice}[section]
+%\newtheorem{application}{Application}[section]
+%\newtheorem{probleme}{Problème}[section]
+%\newtheorem{propriete}{Propriété}[section]
+%\newtheorem{theoreme}{Théorème}[section]
+%\newtheorem{demo}{Démonstration}[section]
+\renewcommand\arraystretch{1.5}
+\renewcommand{\tablename}{\textrm{Tableau}}
+\addto\captionsfrench{\renewcommand{\tablename}{\bfseries \textrm{\textbf{Tableau}}}}
+
+\renewcommand{\figurename}{\textrm{Figure}}
+\addto\captionsfrench{\renewcommand{\figurename}{\bfseries \textrm{\textbf{Figure}}}}
+
+
+\renewcommand{\bibname}{%
+	Bibliographie et webographie}
+\addto\captionsfrench{%
+	\renewcommand{\bibname}{%
+		Bibliographie et webographie}}
+
+\makeatletter
+\def\thickhrulefill{\leavevmode \leaders \hrule height 1ex \hfill \kern \z@}
+\def\@makechapterhead#1{%
+	%\vspace*{50\p@}%
+	\vspace*{10\p@}%
+	{\parindent \z@ \centering \reset@font
+		\thickhrulefill\quad
+		\scshape \@chapapp{} \thechapter
+		\quad \thickhrulefill
+		\par\nobreak
+		\vspace*{10\p@}%
+		\interlinepenalty\@M
+		\hrule
+		\vspace*{10\p@}%
+		\Huge \bfseries #1\par\nobreak
+		\par
+		\vspace*{10\p@}%
+		\hrule
+		\vskip 60\p@
+		%	\vskip 100\p@
+	}}
+	\def\@makeschapterhead#1{%
+		%\vspace*{50\p@}%
+		\vspace*{10\p@}%
+		{\parindent \z@ \centering \reset@font
+			\thickhrulefill
+			\par\nobreak
+			\vspace*{10\p@}%
+			\interlinepenalty\@M
+			\hrule
+			\vspace*{10\p@}%
+			\Huge \bfseries #1\par\nobreak
+			\par
+			\vspace*{10\p@}%
+			\hrule
+			\vskip 60\p@
+			%	\vskip 100\p@
+		}}
+		\renewcommand{\chaptername}{\textnormal{Chapitre}}
+		\addto\captionsfrench{\renewcommand{\chaptername}{\textnormal{Chapitre}}}
+		
+		%\newtheorem{madefinition}{\color{black}{\fcolorbox{white}{white}{Définition}}}[section]
+		%\newtheorem{montheoreme}{\color{black}{\fcolorbox{white}{white}{Théorème}}}[section]
+		%\newtheorem{maremarque}{\color{black}{\fcolorbox{white}{white}{Remarque}}}[section]
+		
+		
+		
+		%\setlength{\evensidemargin}{0.9cm}
+		%\setlength{\oddsidemargin}{0.9cm}
+		\setcounter{tocdepth}{2}
+		%\definecolor{bleu}{cmyk}{1.00,0.00,0.00,0.00}
+
+\usepackage{listings}
+\usepackage{xcolor}
+
+
+\begin{document}
+	\renewcommand{\tablename}{Tableau}
+%	\renewcommand{\listalgorithmname}{Liste des algorithmes}
+%	\renewcommand{\lstlistlistingname}{Extrait des codes}
+	\renewcommand{\listfigurename}{Liste des figures}
+%	\floatname{algorithm}{Algorithme}
+\pagestyle{empty}
+\input{couvertur1.tex}
+\newpage
+\null
+\newpage
+\input{couvertur1.tex}
+\pagestyle{plain}
+\pagestyle{fancy}
+
+%\lhead{}
+%\rhead{}
+	\begin{center}
+		\item \chapter*{Remerciements}
+	\end{center}
+	\pagenumbering{roman}
+\addcontentsline{toc}{chapter}{Remerciements}
+
+
+Tout d'abord, nous tenons à remercier l’Ecole Normale Supérieure pour l’Enseignement Technique avec son Directeur, Docteur ULRICH Canisius.     \\
+
+Ensuite, nous transmettrons nos sincères remerciements à Professeur RALAHADY Buno Bakys qui est le responsable du mention EADIMI et aussi  mon encadreur pédagogique qui a suivi et orienté notre travail avec patience et pertinence. Merci pour le temps que vous m’avez accordé pour la correction, ainsi que les conseils qui ont permis la réalisation de ce mémoire.   \\ 
+     \\
+
+Et aussi nous remercions, Monsieur RAVELOMANANA Juvenile Christalin, le responsable du parcours Professorat l’Enseignement en Génie Informatique niveau Licence, qui a accepté d'\^{e}tre mon examinateur.\\
+
+Après cela, nous adressons une immense gratitude à Docteur TOVOHERY Josoa, le responsable du parcours Professorat l’Enseignement en Génie Informatique niveau Master.\\
+ 
+Nous remercions respectueusement Docteur RAKOTOMALALA Hery Frédéric, président du jury, pour votre bienveillance et l'attention que vous avez accordée à mon travail.  \\
+ 
+En outre, nos sincères reconnaissance reviennent à: 
+\begin{enumerate}
+	\item[-] Tous les enseignants de l’ENSET ainsi que le personnel administratif sans votre appui pédagogique et technique, ce mémoire n’aurait pas pu être réalisé.
+	\item[-] Tous les professionnels qui nous ont accordé leurs temps et leur confiance pendant les entretiens, sans eux nous n’aurons pas pu avoir des Données pour réaliser ce présent mémoire
+\end{enumerate}	
+
+
+Nous tenons à remercier particulièrement tous les membres de ma famille pour leur soutien moral, financier et matériel et surtout pour l’accomplissement de ce mémoire du début jusqu’à la fin.\\
+Enfin, il nous a paru primordial, de remercier tous ceux qui avaient apporte leurs aides lors de la réalisation de ce mémoire.\\
+Merci beaucoup !
+\\
+
+
+\begin{center}
+	\chapter*{Cahier des charges}
+\end{center}
+\addcontentsline{toc}{chapter}{Cahier des Charges}
+\section*{Thème du sujet:}
+\begin{enumerate}
+\item [$\Rightarrow$] {Conception d'un éditeur collaboratif de code base sur des CRDT optimisés pour la synchronisation en temps réel dans des environnements distribués}
+\end{enumerate}
+\section*{Contextes}
+\begin{enumerate}
+\item[] Le développement logiciel collaboratif à distance nécessite des outils capables de gérer simultanément les modifications de plusieurs utilisateurs sans conflits ni perte de données. Les IDE classiques et systèmes de version centralisés montrent leurs limites pour la synchronisation en temps réel. Les CRDT (Conflict-Free Replicated Data Types) offrent une solution efficace pour garantir la cohérence automatique dans les environnements distribués. Ce projet vise à concevoir un éditeur de code collaboratif utilisant des CRDT optimisés, assurant synchronisation instantanée, portabilité multiplateforme et interface ergonomique, tout en intégrant les fonctionnalités avancées attendues d’un IDE moderne.
+\end{enumerate}
+\section*{Objectifs généraux}
+Concevoir un éditeur de code multiplateforme pour Java, Python et HTML, avec synchronisation en temps réel, interface ergonomique et stable, supportant la collaboration distribuée et le partage de fichiers.
+
+\section*{Objectifs spécifiques}
+\begin{itemize}
+	\item[-] Gérer automatiquement les projets et fichiers
+	\item[-] Proposer une interface moderne avec coloration syntaxique enrichie et support des multiples onglets
+	\item[-] Assurer la synchronisation collaborative des modifications en temps réel
+	\item[-] Permettre l’exécution directe des fichiers selon leur type (Java, Python, HTML)
+	\item[-] Inclure des tests intégrés pour la stabilité et la performance
+	\item[-] Fournir un packaging multiplateforme pour Linux, Windows et macOS
+\end{itemize}
+
+\section*{Contraintes}
+Performance même sur projets volumineux, stabilité et prévention de perte de données, compatibilité multiplateforme, sécurité lors du partage, architecture modulaire pour faciliter l’extension future.
+
+\renewcommand{\contentsname}{Table des matières}
+\tableofcontents
+%\addcontentsline{toc}{chapter}{Sommaire}
+\listoftables
+\addcontentsline{toc}{chapter}{Liste des tableaux}
+\listoffigures
+\addcontentsline{toc}{chapter}{Liste des figures}
+\chapter{Liste des symboles}
+\addcontentsline{toc}{chapter}{Liste des symboles}
+\begin{tabular}{r|l}
+	 
+	 $SVT$	&Science de la Vie et de la Terre\\ 
+	 $TBI$ & Tableau Blancs Interactifs \\
+	 $WWW$&	World Wide Web\\
+	  $VS$&	Versus\\
+	 $TIC$& Technologies de l'Information et de la Communication\\
+	 $USB$&  Universal Serial Bus\\
+
+	 
+\end{tabular}
+
+
+%\printglossary[Glossaires]
+%\mainmatter
+
+
+% ======================
+% INTRODUCTION
+% ======================
+\chapter*{Introduction Générale}
+%\fancyhead[LE,LO]{\nouppercase\rightmark}
+\fancyhead[LE,LO]{\leftmark}
+\fancyfoot[c]{}
+\pagenumbering{arabic}
+\addcontentsline{toc}{chapter}{Introduction Générale}
+L’évolution rapide des environnements de développement logiciel a engendré une demande croissante pour des outils collaboratifs performants permettant à plusieurs développeurs de travailler simultanément sur un même projet, indépendamment de leur localisation géographique. Dans ce contexte, les systèmes distribués et les mécanismes de synchronisation en temps réel constituent des éléments fondamentaux pour garantir la cohérence des données, la continuité des modifications et l’amélioration de la productivité collective.\\
+
+Face aux limites des éditeurs traditionnels dans les scénarios collaboratifs, la conception d’un éditeur de code basé sur des CRDT (Conflict-free Replicated Data Types) optimisés apparaît comme une solution pertinente pour gérer efficacement les modifications concurrentes sans nécessiter de verrouillage global. Cette approche permet d’assurer une résolution automatique des conflits tout en maintenant une expérience utilisateur fluide, réactive et cohérente.\\
+
+L’objectif principal de ce projet est de concevoir et de développer un environnement de développement intégré (IDE) collaboratif capable de gérer la collaboration multi-utilisateur, la synchronisation en temps réel et la distribution efficace des modifications dans un environnement distribué. L’outil proposé vise également à offrir une interface ergonomique, moderne et stable, adaptée aux exigences actuelles du développement logiciel.\\
+
+Ce mémoire présente, dans un premier temps, les fondements théoriques relatifs aux systèmes distribués et à la synchronisation collaborative. Il expose ensuite l’état de l’art des environnements de développement modernes, avant de détailler la conception et l’architecture technique de la solution proposée. Enfin, il décrit l’implémentation réalisée, les tests effectués, l’analyse des résultats obtenus ainsi que les perspectives d’amélioration, offrant ainsi une vision scientifique et complète de la démarche de conception et de développement adoptée.
+
+\newpage
+% ======================
+% PARTIE I
+% ======================
+\part{Fondements Théoriques}
+\setcounter{chapter}{0}
+
+% ======================
+\chapter{Systèmes Distribués}\label{chap1}
+
+\section{Définition}
+
+Un système distribué est un ensemble d’ordinateurs autonomes interconnectés par un réseau et coopérant pour atteindre un objectif commun. Ces machines communiquent et coordonnent leurs actions par échange de messages, tout en apparaissant à l’utilisateur comme un système unique et cohérent.  
+Les systèmes distribués se caractérisent par l’absence d’horloge globale, la concurrence des processus, et la possibilité de pannes partielles.\\
+
+\section{Cohérence et réplication}
+
+La réplication des données constitue un mécanisme essentiel dans les systèmes distribués afin d’améliorer la disponibilité et la tolérance aux pannes. Elle consiste à maintenir plusieurs copies d’une même donnée sur différents nœuds du réseau.\\
+
+La cohérence définit le degré de synchronisation entre ces copies. Plusieurs modèles de cohérence existent, notamment la cohérence forte, où toutes les répliques présentent un état identique à tout instant, et la cohérence éventuelle, où les répliques convergent progressivement vers un état commun après propagation des mises à jour.
+
+\section{Théorème CAP}
+
+Le théorème CAP, formulé par Eric Brewer, stipule qu’un système distribué ne peut garantir simultanément trois propriétés fondamentales :  
+\begin{itemize}
+	\item[-] \textbf{Cohérence (Consistency)} : toutes les répliques retournent la même valeur.
+	\item[-] \textbf{Disponibilité (Availability)} : chaque requête reçoit une réponse.
+	\item[-] \textbf{Tolérance au partitionnement (Partition Tolerance)} : le système continue de fonctionner malgré une rupture de communication entre nœuds.
+\end{itemize}
+
+Dans un contexte de collaboration temps réel, le choix architectural privilégie généralement la disponibilité et la tolérance au partitionnement, au détriment d’une cohérence forte immédiate.
+
+% ======================
+\chapter{Synchronisation Collaborative}\label{chap2}
+
+\section{Operational Transformation}
+
+L’Operational Transformation (OT) est une technique de synchronisation permettant de gérer les modifications concurrentes sur un document partagé.  
+Elle repose sur la transformation des opérations entrantes afin de préserver l’intention des utilisateurs malgré les conflits potentiels.
+Bien que performante, l’OT nécessite un contrôle centralisé et des mécanismes complexes de transformation, ce qui peut compliquer l’implémentation dans des environnements hautement distribués.
+
+\section{CRDT}
+
+Les CRDT (Conflict-free Replicated Data Types) sont des structures de données conçues pour garantir la convergence automatique des répliques sans coordination centrale stricte.  
+Ils reposent sur des propriétés mathématiques telles que la commutativité et l’idempotence des opérations.  
+Dans le cas des CRDT orientés opérations, chaque modification est propagée aux autres nœuds et appliquée localement de manière déterministe, garantissant ainsi la cohérence éventuelle.
+\section{Comparaison OT vs CRDT}
+
+L'\textbf{Operational Transformation (OT)} repose sur une logique de transformation dépendante du contexte et nécessite une gestion rigoureuse de l'ordre des opérations pour assurer la cohérence des documents partagés :
+\[
+o_i' = T(o_i, o_j) \quad \text{où $T$ transforme $o_i$ en fonction de $o_j$ pour préserver l’intention.}
+\]
+\\
+
+Les \textbf{CRDT (Conflict-free Replicated Data Types)} garantissent la convergence par construction. Chaque opération est commutative et idempotente, ce qui simplifie la gestion des conflits :
+\[
+D_i \xrightarrow{\text{op}} D_i' , \quad D_j \xrightarrow{\text{op}} D_j' , \quad D_i' = D_j' \quad \forall i,j
+\]
+
+\begin{table}[H]
+	\centering
+	\renewcommand{\arraystretch}{1.5}
+	\begin{tabular}{|p{4cm}|p{5.5cm}|p{5.5cm}|}
+		\hline
+		\textbf{Critère} & \textbf{Operational Transformation (OT)} & \textbf{CRDT} \\
+		\hline
+		Principe & Transformation des opérations concurrentes : $o_i' = T(o_i, o_j)$ & Réplication d’une structure de données avec opérations commutatives et idempotentes : $D \xrightarrow{op} D'$ \\
+		\hline
+		Gestion des conflits & Fonctions de transformation explicites & Résolution automatique via commutativité et associativité \\
+		\hline
+		Modèle réseau & Serveur central pour ordonnancer & Pair-à-pair ou client-serveur sans coordination centrale \\
+		\hline
+		Complexité algorithmique & $O(n^2)$ pour documents longs & $O(\log n)$ ou $O(n)$ selon la structure choisie (RGA, LSEQ, Logoot) \\
+		\hline
+		Tolérance aux partitions & Sensible aux pertes et retards & Tolérant aux partitions, convergence assurée après réconciliation \\
+		\hline
+		Ordonnancement & Ordre causal strict nécessaire & L’ordre d’application n’affecte pas la convergence \\
+		\hline
+		Méta-données & Historique des opérations & Identifiant unique par élément (siteID + compteur), peut croître avec le document \\
+		\hline
+		Scalabilité & Limitée par le serveur central & Scalabilité horizontale naturelle \\
+		\hline
+		Exemples d’usage & Google Docs (OT historique) & Yjs, Automerge, Redis CRDT \\
+		\hline
+		Avantages IDE collaboratif & Gestion fine des conflits, historique complet & Convergence automatique, résilience réseau, idéal pour multi-utilisateurs \\
+		\hline
+		Inconvénients IDE & Complexité d’implémentation, risque d’erreurs & Surcharge mémoire due aux identifiants et métadonnées \\
+		\hline
+	\end{tabular}
+	\caption{Comparaison technique et formelle entre OT et CRDT pour un IDE collaboratif}
+\end{table}
+
+
+\noindent
+\textbf{Remarque :} Bien que les CRDT simplifient la gestion des conflits et assurent une convergence déterministe, ils peuvent entraîner une augmentation de la consommation mémoire liée aux métadonnées nécessaires au suivi des opérations et à l’identification unique des éléments dans le document.
+\section{Justification du choix}
+
+Dans le cadre de ce projet, l’utilisation des CRDT est particulièrement justifiée par leur capacité à assurer une cohérence éventuelle entre plusieurs réplicas distribués sans nécessiter de serveur central pour la résolution des conflits. Chaque opération appliquée sur une réplique est conçue pour être \textbf{commutative}, \textbf{idempotente} et \textbf{associative}, garantissant ainsi que, quel que soit l’ordre de propagation et d’application des modifications, toutes les copies convergeront vers un état final cohérent.\\
+
+Cette approche présente plusieurs avantages majeurs pour un IDE collaboratif :  
+
+\begin{itemize}
+	\item[-] \textbf{Tolérance aux pannes et aux partitions réseau} : les CRDT permettent aux utilisateurs de continuer à modifier le document même en cas de déconnexion temporaire, en assurant une réconciliation automatique lors de la reconnexion.
+	\item[-] \textbf{Réduction de la complexité serveur} : contrairement à l’Operational Transformation (OT), aucun serveur central n’est requis pour transformer ou ordonnancer les opérations, ce qui simplifie l’architecture et améliore la scalabilité horizontale.
+	\item[-] \textbf{Expérience utilisateur fluide} : les modifications locales sont appliquées immédiatement, sans attendre la validation d’un serveur, offrant ainsi une interface réactive et temps réel.
+	\item[-] \textbf{Extensibilité et maintenabilité} : les CRDT se prêtent facilement à l’intégration de nouvelles fonctionnalités collaboratives, telles que la gestion de versions, l’édition multi-documents et les plugins personnalisés, tout en préservant la convergence du système.
+	\item[-] \textbf{Sécurité et résilience} : la décentralisation des opérations réduit les risques de points de défaillance uniques et limite l’exposition aux interruptions de service ou aux attaques ciblant un serveur central.
+\end{itemize}
+En somme, le choix des CRDT s’inscrit parfaitement dans la logique d’un IDE collaboratif distribué : il garantit la robustesse, la cohérence automatique et la fluidité de l’édition multi-utilisateurs, tout en simplifiant la conception et en assurant une grande flexibilité pour des évolutions futures. Ce compromis entre performance, fiabilité et simplicité d’implémentation rend cette technologie particulièrement adaptée aux besoins de collaboration en temps réel et aux exigences d’un environnement distribué hétérogène.
+
+% ======================
+\chapter{État de l’Art des IDE Modernes}\label{chap3}
+
+\section{Analyse comparative}
+
+\paragraph{}Les environnements de développement modernes tels que Visual Studio Code, IntelliJ IDEA ou Eclipse proposent des fonctionnalités avancées : gestion de projets, coloration syntaxique intelligente, débogage intégré, extensions modulaires et collaboration en temps réel.  
+
+\paragraph{}Les solutions collaboratives existantes s’appuient souvent sur des architectures client-serveur centralisées et des mécanismes de synchronisation propriétaires.
+
+\section{Limites des solutions existantes}
+
+Malgré leurs performances, ces environnements présentent certaines limites :  
+\begin{itemize}
+	\item[-] Dépendance à des serveurs cloud propriétaires.
+	\item[-] Difficulté d’intégration dans des environnements locaux distribués.
+	\item[-] Manque de contrôle sur les mécanismes internes de synchronisation.
+\end{itemize}
+
+\paragraph{}Ces limites motivent la conception d’un éditeur collaboratif basé sur des mécanismes ouverts et optimisés, adaptés aux environnements distribués hétérogènes.% ======================
+% PARTIE II
+% ======================
+\part{\textbf{Conception et Architecture du Système}}
+\setcounter{chapter}{0}
+
+% ======================
+\chapter{\textbf{Analyse et Spécification des Besoins}}
+
+L’analyse des besoins constitue une phase structurante dans la conception d’un environnement de développement intégré collaboratif distribué. Elle permet de formaliser de manière rigoureuse les exigences fonctionnelles et non fonctionnelles du système, tout en intégrant les contraintes techniques et technologiques inhérentes au contexte de développement. Cette étape conditionne la cohérence architecturale globale ainsi que la robustesse des choix technologiques retenus.
+
+% ======================
+\section{\textbf{Exigences fonctionnelles}}
+
+Le système doit permettre une \textbf{édition collaborative de code en temps réel}, reposant sur un mécanisme de réplication cohérente basé sur les \textbf{CRDT (Conflict-free Replicated Data Types)} afin de garantir la convergence sans mécanisme central de résolution de conflits.
+
+Il doit intégrer un \textbf{gestionnaire de projets} compatible avec les structures standards telles que \textbf{Maven} et \textbf{Gradle}, incluant la détection automatique des dépendances et la configuration d’exécution.
+
+L’éditeur doit proposer des fonctionnalités avancées :  
+\textbf{coloration syntaxique multi-langages},  
+\textbf{analyse lexicale incrémentale},  
+\textbf{détection d’erreurs en temps réel},  
+\textbf{complétion intelligente via LSP},  
+\textbf{navigation sémantique dans le code}.
+
+Le système doit supporter une \textbf{authentification multi-utilisateurs}, la gestion de \textbf{sessions collaboratives isolées}, ainsi qu’une synchronisation bidirectionnelle basée sur le protocole \textbf{WebSocket}.
+
+Enfin, un \textbf{système de plugins extensible} doit permettre l’ajout dynamique de nouvelles fonctionnalités sans modification du noyau applicatif, garantissant ainsi l’évolutivité du système.
+% ======================
+\section{\textbf{Exigences non fonctionnelles}}
+
+Les exigences non fonctionnelles définissent les contraintes et qualités que le système doit respecter, au-delà des fonctionnalités strictes. Elles concernent la performance, la sécurité, la fiabilité, la scalabilité et la maintenabilité du système.
+
+Tout d’abord, le système doit garantir une \textbf{latence de synchronisation inférieure à 100 ms} dans un environnement réseau standard. Cette contrainte est essentielle pour assurer une expérience utilisateur fluide et réactive, notamment lors de l’édition collaborative en temps réel sur des documents distribués.
+
+Ensuite, le système doit assurer une \textbf{cohérence éventuelle forte} entre toutes les réplicas distribuées. Chaque modification doit converger vers un état global cohérent, indépendamment de l’ordre de réception des opérations et de leur propagation dans le réseau. Cette propriété garantit l’intégrité des données et la continuité de l’expérience collaborative.
+
+L’architecture doit également permettre une \textbf{scalabilité horizontale}, c’est-à-dire la capacité d’ajouter dynamiquement de nouveaux nœuds serveurs afin de traiter des charges de travail croissantes sans dégradation des performances. Cette scalabilité doit être supportée par des mécanismes de conteneurisation et d’orchestration distribuée, assurant la flexibilité et la robustesse du déploiement.
+
+La \textbf{sécurité} constitue un autre aspect fondamental des exigences non fonctionnelles. Le système doit protéger les données et les sessions utilisateur grâce à plusieurs mesures complémentaires : un \textbf{chiffrement des communications} via TLS, garantissant la confidentialité des informations transmises ; une \textbf{isolation stricte des sessions} pour éviter les interférences entre utilisateurs ; un \textbf{contrôle d’accès basé sur rôles (RBAC)} pour limiter les privilèges selon le profil utilisateur ; et une \textbf{validation systématique des opérations reçues} afin de prévenir toute modification non autorisée ou malformée.
+
+Enfin, le système doit respecter les principes de \textbf{modularité, maintenabilité et testabilité}, permettant une évolution incrémentale et un déploiement fiable sur différentes plateformes. La \textbf{portabilité multiplateforme} sur Windows, Linux et macOS constitue une exigence essentielle pour garantir l’accessibilité et l’utilisation du système dans des environnements variés.
+
+En résumé, ces exigences non fonctionnelles définissent un cadre strict pour la conception et le développement du système, garantissant des performances optimales, une sécurité renforcée, une robustesse face aux pannes et une évolutivité adaptée aux besoins des environnements distribués collaboratifs.
+% ======================
+\section{\textbf{Contraintes}}
+
+La conception et le développement du système doivent respecter un ensemble de contraintes techniques et environnementales spécifiques, qui conditionnent la faisabilité et la performance globale de l’éditeur collaboratif.
+
+Tout d’abord, le développement est réalisé en \textbf{Java 21 ou supérieur}, afin de bénéficier des dernières améliorations de la plateforme, notamment en termes de performance, de gestion de la mémoire et de sécurité. Cette contrainte impose également la compatibilité avec les bibliothèques et frameworks modernes, ainsi qu’une maintenance facilitée sur le long terme.
+
+L’interface utilisateur est implémentée en \textbf{JavaFX}, choix motivé par la possibilité de concevoir des interfaces graphiques riches, réactives et multiplateformes, tout en assurant une intégration harmonieuse avec le moteur applicatif Java. Cette contrainte oriente également le design de l’interface vers une architecture basée sur le pattern MVVM ou MVC, garantissant modularité et testabilité.
+
+La communication entre les différents clients et le serveur repose sur le protocole \textbf{WebSocket}, permettant un échange bidirectionnel et en temps réel des opérations collaboratives. Cette contrainte impose une attention particulière à la gestion des connexions, à la tolérance aux pannes et à la sécurisation des flux de données.
+
+Enfin, le système doit être pleinement compatible avec les principaux systèmes d’exploitation (\textbf{Windows, Linux et macOS}), garantissant ainsi une portabilité multiplateforme et une accessibilité maximale pour les utilisateurs dans des environnements hétérogènes. Cette contrainte influe sur le choix des dépendances, la configuration des chemins d’exécution et la gestion des différences spécifiques à chaque OS.
+
+En résumé, ces contraintes définissent le cadre technique et opérationnel du projet, assurant la cohérence entre les choix technologiques, la performance attendue et l’expérience utilisateur finale.
+% ======================
+\chapter{\textbf{Architecture Générale du Système}}
+
+L’architecture adoptée repose sur une approche \textbf{modulaire orientée services}, combinant une structure client-serveur temps réel et un noyau applicatif extensible. Cette organisation vise à séparer strictement les responsabilités afin de garantir robustesse et évolutivité.
+
+% ======================
+\section{\textbf{Architecture logicielle modulaire}}
+
+Le système est structuré selon une architecture en couches clairement définies :
+
+\textbf{Couche Présentation} : interface JavaFX, composants UI réactifs, gestion des interactions utilisateur.  
+
+\textbf{Couche Application} : orchestration des services, gestion des commandes, coordination des opérations collaboratives.  
+
+\textbf{Couche Domaine} : implémentation du moteur CRDT, gestion de l’état partagé, validation des opérations.  
+
+\textbf{Couche Infrastructure} : communication WebSocket, persistance, sécurité, gestion des connexions.
+
+Cette séparation favorise l’\textbf{indépendance des modules}, la \textbf{testabilité unitaire} et l’\textbf{évolution incrémentale} du système.
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}[
+		layer/.style={rectangle, draw=blue!70, fill=blue!20, rounded corners, minimum width=6cm, minimum height=1cm, font=\sffamily\bfseries},
+		module/.style={rectangle, draw=gray!70, fill=gray!10, rounded corners, minimum width=5cm, minimum height=0.8cm, font=\small\sffamily},
+		arrow/.style={->, thick, >=stealth}
+		]
+		
+		% Couche Présentation
+		\node[layer] (presentation) {Couche Présentation};
+		\node[module, below=0.3cm of presentation] (ui) {Composants UI réactifs, interactions utilisateur, JavaFX};
+		
+		% Couche Application
+		\node[layer, below=1.5cm of ui] (application) {Couche Application};
+		\node[module, below=0.3cm of application] (services) {Orchestration des services, gestion des commandes, coordination CRDT};
+		
+		% Couche Domaine
+		\node[layer, below=1.5cm of services] (domaine) {Couche Domaine};
+		\node[module, below=0.3cm of domaine] (crdt) {Moteur CRDT, gestion de l'état partagé, validation des opérations};
+		
+		% Couche Infrastructure
+		\node[layer, below=1.5cm of crdt] (infra) {Couche Infrastructure};
+		\node[module, below=0.3cm of infra] (network) {WebSocket, persistance, sécurité, gestion des connexions};
+		
+		% Flèches de dépendance
+		\draw[arrow] (ui.south) -- (services.north);
+		\draw[arrow] (services.south) -- (crdt.north);
+		\draw[arrow] (crdt.south) -- (network.north);
+		
+	\end{tikzpicture}
+	\caption{Architecture logicielle modulaire de l’IDE collaboratif avec ses couches et modules principaux}
+	\label{fig:uml_architecture_modulairee}
+\end{figure}
+
+
+% ======================
+\section{\textbf{Architecture réseau}}
+
+Le système adopte un modèle \textbf{client-serveur bidirectionnel} basé sur WebSocket.
+
+Chaque client maintient une copie locale du document sous forme de structure CRDT. Les opérations locales sont propagées sous forme d’\textbf{opérations immuables} vers le serveur, qui agit principalement comme \textbf{relai de diffusion} sans transformation centrale, garantissant ainsi une convergence déterministe.
+
+Un mécanisme de \textbf{gestion de sessions collaboratives} assure l’isolation logique des espaces de travail et la synchronisation d’état lors de la reconnexion d’un client.
+
+% ======================
+\section{\textbf{Modélisation UML}}
+
+La modélisation du système repose sur :
+
+\textbf{Diagrammes de cas d’utilisation} pour formaliser les interactions utilisateur.  
+
+\textbf{Diagrammes de classes} pour structurer le noyau CRDT, les gestionnaires de sessions et les composants applicatifs.  
+
+\textbf{Diagrammes de séquence} pour modéliser le flux des opérations collaboratives.  
+
+\textbf{Diagrammes de déploiement} pour représenter l’architecture distribuée.
+
+% ======================
+\chapter{\textbf{Conception Technique Détaillée}}
+
+% ======================
+\section{\textbf{Moteur CRDT}}
+
+Le moteur repose sur une structure de type \textbf{CRDT séquentiel}, inspirée des modèles \textbf{RGA} ou \textbf{LSEQ}.  
+
+Chaque insertion est identifiée par un identifiant unique structuré sous la forme :  
+\[
+(siteID, logicalClock)
+\]
+
+La convergence est assurée par construction, sans coordination centrale ni verrou global.
+
+Un mécanisme de \textbf{garbage collection logique} est envisagé afin de limiter la croissance structurelle des identifiants et optimiser l’empreinte mémoire.
+
+
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}[
+		client/.style={circle, draw=blue!70, fill=blue!20, thick, minimum size=1.2cm, text centered, font=\small},
+		server/.style={rectangle, draw=green!70, fill=green!20, thick, minimum width=3cm, minimum height=1.5cm, text centered, font=\small},
+		arrow/.style={-{Stealth[scale=1.2]}, thick, rounded corners=5pt, draw=orange!70},
+		textstyle/.style={font=\footnotesize}
+		]
+		
+		% --- Nodes ---
+		\node[client] (client1) {Client 1};
+		\node[client, right=5cm of client1] (client2) {Client 2};
+		\node[client] (client3) at ($(client1)!0.5!(client2) - (0,3cm)$) {Client 3};
+		
+		% --- Position centrale pour serveur ---
+		\node[server] (server) at ($(client1)!0.5!(client2) + (0,3cm)$) {Serveur CRDT};
+		
+		% --- Arrows ---
+		\draw[arrow] (client1.north) .. controls +(0,1cm) and +(-1,0) .. (server.south west);
+		\draw[arrow] (client2.north) .. controls +(0,1cm) and +(1,0) .. (server.south east);
+		\draw[arrow] (client3.north) .. controls +(0,1cm) and +(0,-0.5cm) .. (server.south);
+		
+		% Arrows retour (diffusion)
+		\draw[arrow, dashed] (server.south west) .. controls +(-1,0.5cm) and +(0,0.5cm) .. (client1.north);
+		\draw[arrow, dashed] (server.south east) .. controls +(1,0.5cm) and +(0,0.5cm) .. (client2.north);
+		\draw[arrow, dashed] (server.south) .. controls +(0,-0.5cm) and +(0,0.5cm) .. (client3.north);
+		
+		% --- Labels ---
+		\node[textstyle, left] at (client1.west) {Édition locale};
+		\node[textstyle, right] at (client2.east) {Édition locale};
+		\node[textstyle, below] at (client3.south) {Édition locale};
+		
+	\end{tikzpicture}
+	\caption{Synchronisation et diffusion des opérations CRDT}
+	\label{fig:moteur_crdt}
+\end{figure}
+% ======================
+\section{\textbf{Serveur WebSocket}}
+
+Le serveur WebSocket constitue le cœur de la synchronisation en temps réel dans l’éditeur collaboratif. Il adopte un modèle \textbf{non bloquant basé sur NIO (Non-blocking I/O)}, permettant de gérer simultanément de nombreux clients sans surcharger les ressources. Cette approche assure une latence minimale et une réactivité optimale, même en présence de multiples utilisateurs connectés.
+
+Le serveur a plusieurs responsabilités principales :  
+	\textbf{Distribution des opérations} : chaque modification effectuée par un utilisateur est transformée en opération immuable et diffusée aux autres clients participants de manière quasi instantanée.
+	
+	\textbf{Gestion des salles collaboratives} : les documents ou projets sont isolés dans des sessions distinctes afin de garantir la confidentialité et l’intégrité des données.
+	
+	\textbf{Synchronisation initiale d’état} : lors de la connexion d’un nouveau client, le serveur transmet l’état courant du document afin de permettre une collaboration fluide dès le départ.
+	
+	\textbf{Persistance optionnelle de snapshots} : le serveur peut enregistrer périodiquement l’état des documents pour permettre la récupération après panne ou déconnexion prolongée.
+
+Une stratégie de \textbf{déploiement par conteneurisation Docker} assure la \textbf{scalabilité horizontale}, facilitant l’ajout de serveurs supplémentaires pour gérer l’augmentation du nombre d’utilisateurs sans dégrader les performances.
+
+\paragraph{}
+
+
+\begin{figure}[H]
+	\centering
+\begin{tikzpicture}[
+	server/.style={rectangle, draw=blue!70, fill=blue!20, rounded corners, minimum width=3cm, minimum height=1cm, text centered},
+	client/.style={ellipse, draw=green!70, fill=green!20, minimum width=2cm, minimum height=1cm, text centered},
+	line/.style={->, >=stealth, thick, draw=gray!70}
+	]
+	
+	% Clients
+	\node[client] (client1) {Client 1};
+	\node[client, right=4cm of client1] (client2) {Client 2};
+	
+	% Point central pour placer client3 et le serveur
+	\coordinate (center) at ($(client1)!0.5!(client2)$);
+	
+	% Client3 en dessous
+	\node[client, below=2.5cm of center] (client3) {Client 3};
+	
+	% Serveur au dessus
+	\node[server, above=2.5cm of center] (server) {Serveur WebSocket};
+	
+	% Flèches bidirectionnelles
+	\draw[line] (client1) -- (server);
+	\draw[line] (client2) -- (server);
+	\draw[line] (client3) -- (server);
+	\draw[line] (server) -- (client1);
+	\draw[line] (server) -- (client2);
+	\draw[line] (server) -- (client3);
+	
+\end{tikzpicture}
+\caption{Distribution des opérations}
+\label{fig:serveur_websocket}
+\end{figure}% ======================
+\section{\textbf{Interface JavaFX}}
+
+L’interface utilisateur est conçue selon le modèle architectural \textbf{MVVM (Model-View-ViewModel)}, permettant une séparation stricte entre la logique métier, la représentation visuelle et la gestion des états. Cette approche favorise la \textbf{maintenabilité}, la \textbf{testabilité} et la possibilité d’évolution incrémentale de l’interface.  
+
+Les composants graphiques sont connectés aux modèles de données via des \textbf{propriétés observables} et des \textbf{bindings}, garantissant une réactivité \textbf{temps réel} lors des modifications de l’état du système. Cette liaison dynamique assure que les changements effectués par le moteur CRDT ou par l’utilisateur sont immédiatement reflétés dans l’interface, sans nécessiter de rafraîchissement manuel.  
+
+Un moteur de \textbf{coloration syntaxique incrémentale} est intégré afin de gérer efficacement les modifications partielles du document. Contrairement aux méthodes classiques qui recalculent entièrement le rendu après chaque modification, ce moteur analyse uniquement les portions affectées, réduisant ainsi la latence et optimisant les performances de l’application, même en présence de documents volumineux.  
+
+L’interface inclut également des mécanismes visuels d’alerte et de notification, permettant d’informer l’utilisateur de la synchronisation des opérations, de la détection de conflits ou des changements réalisés par d’autres collaborateurs, contribuant ainsi à une expérience utilisateur fluide et intuitive.
+% ======================% ======================
+\section{\textbf{Gestionnaire de projets}}
+
+Le gestionnaire de projets constitue le cœur de l’organisation et de la manipulation des projets au sein de l’application. Il offre une interface unifiée pour la \textbf{création de nouveaux projets} ainsi que pour l’\textbf{importation de projets existants}, garantissant une intégration fluide dans l’environnement de travail.  
+
+Chaque projet est soumis à un processus d’\textbf{indexation et d’analyse des fichiers}, permettant d’établir une cartographie complète des sources, des dépendances et des ressources associées. Cette étape est essentielle pour optimiser les fonctionnalités d’édition, de recherche et de navigation dans le code.  
+
+Le gestionnaire assure également une \textbf{intégration transparente avec les outils de build} tels que \textbf{Maven}, facilitant la compilation, la gestion des dépendances et l’exécution des tests unitaires. Cette intégration automatise la configuration du projet et réduit les interventions manuelles de l’utilisateur.  
+
+Enfin, le système prend en charge le \textbf{Language Server Protocol (LSP)} pour l’analyse statique, offrant des fonctionnalités avancées telles que l’autocomplétion, la vérification de types, la détection d’erreurs et la navigation intelligente dans le code, contribuant ainsi à un environnement de développement robuste, réactif et ergonomique.
+% ======================
+\section{\textbf{Système de plugins}}
+
+Le système de plugins constitue un mécanisme central pour l’\textbf{extensibilité et la modularité} de l’application. Il repose sur un \textbf{chargement dynamique des modules} via le service Java \textbf{ServiceLoader}, permettant d’ajouter ou de retirer des fonctionnalités sans modifier le noyau applicatif.  
+
+Chaque plugin doit implémenter une \textbf{interface contractuelle standardisée}, garantissant une intégration sécurisée et cohérente avec le reste du système. Cette approche assure que l’extension des fonctionnalités ne compromet pas la stabilité du cœur applicatif et maintient une \textbf{séparation stricte des responsabilités} entre les modules.  
+
+L’architecture ainsi proposée favorise :  
+\begin{itemize}
+	\item[-] La \textbf{pérennité du système}, en facilitant la maintenance et les mises à jour incrémentales.  
+	\item[-] L’\textbf{interopérabilité}, en permettant à des développeurs tiers de créer des extensions compatibles.  
+	\item[-] L’\textbf{adaptabilité}, en autorisant l’activation ou la désactivation dynamique de fonctionnalités selon les besoins de l’utilisateur ou du projet.  
+\end{itemize}
+
+Dans un contexte scientifique ou industriel, ce modèle garantit une \textbf{évolution contrôlée du logiciel}, sans répercussions sur les composants critiques et en conservant un haut niveau de fiabilité.
+\newpage
+% ======================
+% PARTIE III
+% ======================
+\part{Implémentation et Validation}
+
+\chapter{Implémentation}
+\section{Technologies utilisées}
+\section{Structure du projet}
+\section{Extraits de code}
+
+\begin{lstlisting}
+	public void applyOperation(Operation op) {
+		// Implementation
+	}
+\end{lstlisting}
+
+\chapter{Tests et Validation}
+\section{Tests unitaires}
+\section{Tests d’intégration}
+\section{Tests multi-clients}
+\section{Tests de performance}
+
+\chapter{Résultats et Analyse}
+\section{Performance}
+\section{Robustesse}
+\section{Comparaison avec IDE existants}
+
+\chapter{Coût et Perspectives}
+\section{Estimation du coût}
+\section{Limites}
+\section{Améliorations futures}
+
+% ======================
+% CONCLUSION
+% ======================
+\chapter{Conclusion Générale}
+
+Ce projet démontre que ...
+
+
+
+ 
+
+\newpage
+
+\pagenumbering{Roman}
+
+
+
+
+           
+\renewcommand{\bibname}{Références bibliographiques et webographiques}
+
+
+
+%\bibliographystyle{apalike}
+%\bibliographystyle{alpha}
+\bibliographystyle{plain}
+
+\addcontentsline{toc}{chapter}{Références bibliographiques et webographiques}
+\bibliography{bibli}
+
+\nocite{ref1}
+\nocite{xamp}
+\nocite{javascripte}
+
+\appendix
+\newpage
+%\pagestyle{fancyapalike}
+%\pagestyle{fancyalpha}
+\pagestyle{fancyplain}
+\addcontentsline{toc}{chapter}{Annexe}
+
+\chapter*{Annexe}
+{\large\textbf{Questions d'enqu\^ete:}}\\
+
+
+
+
+
+
+
+
+4. Pensez-vous que l’utilisation des éléments multimédias rend les cours de SVT plus intéressants ?\\
+-Oui, beaucoup plus intéressants\\
+-Oui, un peu plus intéressants\\
+-Non, cela ne change rien\\
+-Non, cela rend le cours moins intéressant\\
+
+5. Quel est, selon vous, l’effet principal des supports multimédias sur votre compréhension des notions de SVT ?\\
+-Amélioration significative de la compréhension\\
+-Légère amélioration\\
+-Pas d’effet notable\\
+-Cela complique parfois la compréhension\\
+
+6. Par rapport aux cours traditionnels (exposés magistraux, lecture de manuels), les supports multimédias vous aident-ils à mieux mémoriser les notions ?\\
+-Oui, beaucoup mieux\\
+-Oui, un peu mieux\\
+-Non, aucun changement\\
+-Non, cela me perturbe\\
+
+7. Quels sont les avantages des supports multimédias en SVT selon vous ? \\
+-Visualisation concrète des phénomènes biologiques et géologiques\\
+-Meilleure motivation et engagement en classe\\
+-Apprentissage plus rapide et efficace\\
+-Interactivité et participation active\\
+-Autres....\\
+
+8. Avez-vous rencontré des difficultés lors de l’utilisation des supports multimédias en cours de SVT ?\\
+-Oui, problèmes techniques (connexion, matériel, compatibilité)\\
+-Oui, surcharge d’informations qui rend l’apprentissage confus\\
+-Non, aucune difficulté\\
+
+
+9. Préférez-vous apprendre avec des supports multimédias ou avec des supports traditionnels (manuels, notes de cours) ?\\
+-Uniquement avec des supports multimédias\\
+-Un mélange des deux\\
+-Uniquement avec des supports traditionnels\\
+
+10. Selon vous, l'intégration des éléments multimédias devrait-elle être renforcée dans l'enseignement des SVT ?\\
+-Oui, fortement\\
+-Oui, mais avec modération\\
+-Non, cela n’est pas nécessaire
+
+
+
+
+
+
+
+ 
+\end{document}
+ 
+ 

@@ -1,0 +1,210 @@
+\documentclass[12pt,a4paper]{report}
+
+% ======================
+% PACKAGES
+% ======================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{setspace}
+\usepackage{tocloft}
+
+\geometry{margin=2.5cm}
+\onehalfspacing
+
+% ======================
+% CONFIGURATION CODE
+% ======================
+\lstset{
+    language=Java,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    stringstyle=\color{red},
+    commentstyle=\color{gray},
+    breaklines=true,
+    frame=single
+}
+
+% ======================
+% PAGE DE GARDE
+% ======================
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    {\Large \textbf{Université XXXXX}}\\[0.5cm]
+    {\large Faculté des Sciences et Technologies}\\[1cm]
+    
+    \vspace{2cm}
+    
+    {\Huge \textbf{Mémoire de Master I}}\\[1cm]
+    
+    {\Large 
+    \textbf{Conception et Développement d’un IDE Collaboratif Distribué Basé sur des CRDT pour la Synchronisation Temps Réel}
+    }\\[2cm]
+    
+    \textbf{Présenté par :}\\
+    Nom Prénom\\[1cm]
+    
+    \textbf{Encadrant :}\\
+    Nom de l'encadrant\\[2cm]
+    
+    Année universitaire : 2025–2026
+    
+    \vfill
+\end{titlepage}
+
+% ======================
+% REMERCIEMENTS
+% ======================
+\chapter*{Remerciements}
+\addcontentsline{toc}{chapter}{Remerciements}
+
+Je remercie ...
+
+% ======================
+% RESUME
+% ======================
+\chapter*{Résumé}
+\addcontentsline{toc}{chapter}{Résumé}
+
+Ce mémoire présente la conception et le développement d’un environnement de développement intégré collaboratif basé sur les CRDT...
+
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+This thesis presents...
+
+% ======================
+% TABLE DES MATIERES
+% ======================
+\tableofcontents
+\newpage
+
+% ======================
+% INTRODUCTION
+% ======================
+\chapter{Introduction Générale}
+
+\section{Contexte}
+\section{Problématique}
+\section{Objectifs}
+\section{Méthodologie}
+\section{Organisation du mémoire}
+
+% ======================
+% PARTIE I
+% ======================
+\part{Fondements Théoriques}
+
+\chapter{Systèmes Distribués}
+\section{Définition}
+\section{Cohérence et réplication}
+\section{Théorème CAP}
+
+\chapter{Synchronisation Collaborative}
+\section{Operational Transformation}
+\section{CRDT}
+\section{Comparaison OT vs CRDT}
+\section{Justification du choix}
+
+\chapter{État de l’Art des IDE Modernes}
+\section{Analyse comparative}
+\section{Limites des solutions existantes}
+
+% ======================
+% PARTIE II
+% ======================
+\part{Conception et Architecture}
+
+\chapter{Analyse des Besoins}
+\section{Exigences fonctionnelles}
+\section{Exigences non fonctionnelles}
+\section{Contraintes}
+
+\chapter{Architecture Globale}
+\section{Architecture modulaire}
+\section{Architecture réseau}
+\section{Diagrammes UML}
+
+\chapter{Conception Technique}
+\section{Moteur CRDT}
+\section{Serveur WebSocket}
+\section{Interface JavaFX}
+\section{Gestionnaire de projets}
+\section{Système de plugins}
+
+% ======================
+% PARTIE III
+% ======================
+\part{Implémentation et Validation}
+
+\chapter{Implémentation}
+\section{Technologies utilisées}
+\section{Structure du projet}
+\section{Extraits de code}
+
+\begin{lstlisting}
+// Exemple de méthode CRDT
+public void applyOperation(Operation op) {
+    // Implementation
+}
+\end{lstlisting}
+
+\chapter{Tests et Validation}
+\section{Tests unitaires}
+\section{Tests d’intégration}
+\section{Tests multi-clients}
+\section{Tests de performance}
+
+\chapter{Résultats et Analyse}
+\section{Performance}
+\section{Robustesse}
+\section{Comparaison avec IDE existants}
+
+\chapter{Coût et Perspectives}
+\section{Estimation du coût}
+\section{Limites}
+\section{Améliorations futures}
+
+% ======================
+% CONCLUSION
+% ======================
+\chapter{Conclusion Générale}
+
+Ce projet démontre que ...
+
+% ======================
+% BIBLIOGRAPHIE
+% ======================
+\begin{thebibliography}{9}
+
+\bibitem{crdt}
+Shapiro, M. et al. (2011). Conflict-free Replicated Data Types.
+
+\bibitem{cap}
+Brewer, E. (2000). Towards Robust Distributed Systems.
+
+\end{thebibliography}
+
+% ======================
+% ANNEXES
+% ======================
+\appendix
+
+\chapter{Diagrammes UML}
+\chapter{Scripts de lancement}
+\chapter{Extraits de configuration}
+
+\end{document}

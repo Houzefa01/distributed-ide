@@ -1,0 +1,285 @@
+════════════════════════════════════════════════════════════════════════════════
+JDTLS SETUP & TROUBLESHOOTING GUIDE
+════════════════════════════════════════════════════════════════════════════════
+
+Date: 27 Feb 2026
+Project: Distributed IDE
+Issue: "jdtls not found" error in LSP Bridge
+
+════════════════════════════════════════════════════════════════════════════════
+CURRENT STATUS
+════════════════════════════════════════════════════════════════════════════════
+
+✅ RESOLVED: jdtls stub installed
+   Location: ~/.jdtls/bin/jdtls
+   Wrapper:  ~/.local/bin/jdtls -> ~/.jdtls/bin/jdtls
+   Path:     $JDTLS_HOME = ~/.jdtls
+   Status:   Accessible and callable
+
+✅ FIXED: Environment variables set
+   ~/.bashrc now contains:
+   ├─ export JDTLS_HOME='$HOME/.jdtls'
+   └─ export PATH=$PATH:~/.local/bin
+
+════════════════════════════════════════════════════════════════════════════════
+WHAT IS THE STUB?
+════════════════════════════════════════════════════════════════════════════════
+
+The stub (~/.jdtls/bin/jdtls) is a bash wrapper that:
+
+1. ALLOWS IDE TO START - Prevents "Cannot run program 'jdtls'" errors
+2. GRACEFULLY DEGRADED - LSP features disabled but IDE fully functional
+3. INSTRUCTIVE - Shows how to complete the installation
+4. READY TO UPGRADE - Can be replaced with full installation anytime
+
+════════════════════════════════════════════════════════════════════════════════
+HOW TO USE NOW
+════════════════════════════════════════════════════════════════════════════════
+
+1. NO CHANGES NEEDED - Just run:
+   ./QUICK_START.sh
+
+2. The IDE will start with limited Java support:
+   ✅ Can open and edit Java files
+   ✅ Can compile and run Java code
+   ❌ No autocomplete, diagnostics, hover, etc. (LSP disabled)
+
+════════════════════════════════════════════════════════════════════════════════
+HOW TO ENABLE FULL JAVA LANGUAGE SUPPORT (3 OPTIONS)
+════════════════════════════════════════════════════════════════════════════════
+
+⚙️  OPTION A - BUILD FROM SOURCE (Recommended for full control)
+═════════════════════════════════════════════════════════════
+
+Time: ~5-10 minutes
+Pros: Full control, no external dependencies
+Cons: Requires network + disk space for compilation
+
+Steps:
+  1. Run:
+     chmod +x BUILD_JDTLS_FROM_SOURCE.sh
+     ./BUILD_JDTLS_FROM_SOURCE.sh
+
+  2. This will:
+     ├─ Clone eclipse.jdt.ls from GitHub
+     ├─ Build with Maven (Java 21)
+     ├─ Install to ~/.jdtls
+     └─ Replace the stub with the real jdtls
+
+  3. Verify:
+     source ~/.bashrc
+     jdtls --help
+
+  4. Restart IDE:
+     ./QUICK_START.sh
+
+────────────────────────────────────────────────────────────────────────────────
+
+🌐 OPTION B - DOWNLOAD FROM GITHUB RELEASES (Fastest)
+══════════════════════════════════════════════════════
+
+Time: ~2-3 minutes (depends on network)
+Pros: No compilation needed, quick setup
+Cons: Requires direct download from GitHub
+
+Steps:
+  1. Download from:
+     https://github.com/eclipse-jdtls/eclipse.jdt.ls/releases
+     
+     Check for latest version and download:
+     - For Linux x86_64: jdt-language-server-1.*.0-linux.gtk.x86_64.tar.gz
+     - For Linux ARM64:  jdt-language-server-1.*.0-linux.gtk.aarch64.tar.gz
+
+  2. Extract:
+     cd ~/.jdtls
+     tar -xzf ~/Downloads/jdt-language-server-*.tar.gz
+     rm -f bin/jdtls.stub  # optional remove stub if conflicts
+
+  3. Verify:
+     jdtls --help
+
+  4. Restart IDE:
+     ./QUICK_START.sh
+
+────────────────────────────────────────────────────────────────────────────────
+
+📦 OPTION C - INSTALL FROM SYSTEM PACKAGE MANAGER
+═══════════════════════════════════════════════════
+
+Time: ~1-2 minutes
+Pros: Easiest, system management
+Cons: May not be available or up-to-date
+
+Ubuntu/Debian:
+  Install:
+    sudo apt update
+    sudo apt install -y eclipse-jdt-language-server
+  
+  Verify:
+    which jdtls
+    
+  (If already in /usr/bin, no further action needed)
+
+Fedora/RHEL:
+  sudo dnf install -y eclipse-jdt-language-server
+
+Arch Linux:
+  sudo pacman -S eclipse-jdt-language-server
+
+Other systems:
+  Check your package manager docs for 'jdtls' or 'eclipse-jdt-ls'
+
+════════════════════════════════════════════════════════════════════════════════
+VERIFICATION - AFTER INSTALLATION
+════════════════════════════════════════════════════════════════════════════════
+
+After completing any of the 3 options above, verify:
+
+1. Check installation:
+   which jdtls
+   Expected: /home/hsavatra/.local/bin/jdtls or /usr/bin/jdtls
+
+2. Check if real jdtls or stub:
+   head -20 $(which jdtls)
+   Real: Contains Java command or manifest
+   Stub: Contains "Eclipse JDT Language Server Wrapper" comment
+
+3. Check JDTLS_HOME:
+   echo $JDTLS_HOME
+   Expected: /home/hsavatra/.jdtls
+
+4. Test language server:
+   jdtls --help
+   
+   Real jdtls output:
+   - Starts Java process
+   - May timeout (normal - needs stdio communication)
+   
+   Stub output:
+   - Shows install instructions
+
+════════════════════════════════════════════════════════════════════════════════
+TROUBLESHOOTING
+════════════════════════════════════════════════════════════════════════════════
+
+❓ PROBLEM: Command 'jdtls' still not found after setup
+─────────────────────────────────────────────────────────
+Solution:
+  source ~/.bashrc
+  export PATH=$PATH:~/.local/bin
+  which jdtls
+
+❓ PROBLEM: "jdtls not found" error still appears in IDE logs
+─────────────────────────────────────────────────────────────
+Solution 1 - Restart IDE with env vars:
+  source ~/.bashrc
+  ./QUICK_START.sh
+
+Solution 2 - Manually set in IDE launch:
+  export JDTLS_HOME=$HOME/.jdtls
+  ./QUICK_START.sh
+
+Solution 3 - Check logs:
+  tail -50 logs/lsp-bridge.log | grep -i jdt
+
+❓ PROBLEM: Java files still have no LSP features after installation
+──────────────────────────────────────────────────────────────────
+Solution:
+  1. Check jdtls is real (not stub):
+     file $(which jdtls)
+  
+  2. Restart IDE completely:
+     pkill -f QUICK_START
+     sleep 2
+     ./QUICK_START.sh
+  
+  3. Create/open new Java file and wait 5-10 seconds
+     (LSP server needs time to initialize)
+
+❓ PROBLEM: Build from source fails
+───────────────────────────────────
+Solution:
+  1. Check Maven version:
+     mvn --version
+     (Need 3.6+)
+  
+  2. Check git installed:
+     git --version
+  
+  3. Check disk space:
+     df -h ~  (need at least 2GB free)
+  
+  4. Try building again:
+     ./BUILD_JDTLS_FROM_SOURCE.sh 2>&1 | tail -100
+
+════════════════════════════════════════════════════════════════════════════════
+WHAT'S NEXT?
+════════════════════════════════════════════════════════════════════════════════
+
+Now you can start the IDE:
+  ./QUICK_START.sh
+
+This will launch:
+  ✅ Sync Server         (port 8765) - CRDT synchronization
+  ✅ Signaling Server    (port 8082) - WebRTC signaling
+  ✅ Terminal Service    (port 8766) - Terminal emulation
+  ✅ LSP Bridge          (port 8081) - Language server gateway
+  ✅ JavaFX Client       (GUI)       - Main IDE interface
+
+════════════════════════════════════════════════════════════════════════════════
+PERFORMANCE NOTES
+════════════════════════════════════════════════════════════════════════════════
+
+First-time LSP initialization:
+  - Takes 10-30 seconds (normal, not a hang)
+  - Downloads JDT index on first run
+  - Creates cache in ~/.jdtls-workspace
+  
+Subsequent launches:
+  - Should be instant (cached)
+
+Disk usage:
+  - Full jdtls installation: ~300-500 MB
+  - Workspace cache: ~100-200 MB per project
+
+Memory usage:
+  - jdtls process: ~500 MB - 1.5 GB (configurable in wrapper)
+  - Adjust in ~/.jdtls/bin/jdtls if needed:
+    -Xms1g -> minimum heap (default 1GB)
+    -Xmx2g -> maximum heap (default 2GB)
+
+════════════════════════════════════════════════════════════════════════════════
+FILES RELATED TO THIS SETUP
+════════════════════════════════════════════════════════════════════════════════
+
+Created/Modified:
+  ~/distributed-ide/
+  ├─ SETUP_JDTLS.sh                    → Downloads from Maven/GitHub
+  ├─ BUILD_JDTLS_FROM_SOURCE.sh        → Compiles from source (recommended)
+  ├─ CREATE_JDTLS_STUB.sh              → Creates minimal wrapper
+  ├─ QUICK_START.sh                    → Modified to launch LSP Bridge
+  └─ INSTALL_LSP_DEPENDENCIES.sh       → Install Python/TypeScript LSP
+
+Installation locations:
+  ~/.jdtls/                            → jdtls installation root
+  ~/.jdtls/bin/jdtls                   → Executable wrapper
+  ~/.local/bin/jdtls                   → Symlink to wrapper
+  ~/.jdtls-workspace/                  → LSP cache and metadata
+
+════════════════════════════════════════════════════════════════════════════════
+FINAL NOTES
+════════════════════════════════════════════════════════════════════════════════
+
+✉️  Questions or issues? Check:
+    - IDE logs: tail -f logs/lsp-bridge.log
+    - GitHub issues: https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues
+
+📚 Documentation:
+    - jdtls: https://github.com/eclipse-jdtls/eclipse.jdt.ls/wiki
+    - LSP:   https://microsoft.github.io/language-server-protocol/
+
+🎯 STATUS: Ready to use!
+   The IDE will start with or without JavaScript language support.
+   Java features will remain disabled until jdtls is fully installed.
+
+════════════════════════════════════════════════════════════════════════════════

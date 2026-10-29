@@ -1,0 +1,1503 @@
+/*
+ * Distributed IDE — Dark Theme
+ * Theme ID: ide-dark
+ *
+ * ═══════════════════════════════════════════════════════════
+ *  DESIGN SYSTEM v2 — Comprehensive CSS with variables
+ *  All styles via CSS classes. No inline Java styles.
+ * ═══════════════════════════════════════════════════════════
+ */
+
+/* ═══════════════════════════════════════════════════════════
+   1. DESIGN TOKENS — Color palette, typography, spacing
+   ═══════════════════════════════════════════════════════════ */
+.root {
+    /* ── Typography ────────────────────────────────────── */
+    -fx-font-family: "Segoe UI", "Ubuntu", "Noto Sans", system-ui, sans-serif;
+    -fx-font-size: 13px;
+
+    /* ── Surfaces ──────────────────────────────────────── */
+    -ide-bg-primary:     #1e1e1e;
+    -ide-bg-secondary:   #252526;
+    -ide-bg-tertiary:    #2d2d2d;
+    -ide-bg-elevated:    #333333;
+    -ide-bg-active:      #37373d;
+    -ide-bg-hover:       #2a2d2e;
+    -ide-bg-input:       #3c3c3c;
+    -ide-bg-selection:   #264f78;
+    -ide-bg-drop:        rgba(0, 122, 204, 0.15);
+
+    /* ── Borders ───────────────────────────────────────── */
+    -ide-border:         #3c3c3c;
+    -ide-border-light:   #454545;
+    -ide-border-active:  #007acc;
+
+    /* ── Foreground ────────────────────────────────────── */
+    -ide-fg-primary:     #cccccc;
+    -ide-fg-secondary:   #969696;
+    -ide-fg-muted:       #6a6a6a;
+    -ide-fg-disabled:    #5a5a5a;
+    -ide-fg-inverse:     #ffffff;
+
+    /* ── Accent ────────────────────────────────────────── */
+    -ide-accent:         #007acc;
+    -ide-accent-hover:   #1a8ad4;
+    -ide-accent-pressed: #005a9e;
+    -ide-accent-subtle:  rgba(0, 122, 204, 0.15);
+
+    /* ── Semantic ──────────────────────────────────────── */
+    -ide-danger:         #f44747;
+    -ide-danger-hover:   #e74c3c;
+    -ide-danger-bg:      rgba(244, 71, 71, 0.15);
+    -ide-warning:        #cca700;
+    -ide-warning-bg:     rgba(204, 167, 0, 0.15);
+    -ide-success:        #4ec9b0;
+    -ide-success-hover:  #2ecc71;
+    -ide-info:           #3794ff;
+
+    /* ── Status bar ────────────────────────────────────── */
+    -ide-statusbar-bg:   #007acc;
+    -ide-statusbar-fg:   #ffffff;
+
+    /* ── Activity bar ──────────────────────────────────── */
+    -ide-activitybar-bg: #333333;
+    -ide-activitybar-fg: #858585;
+    -ide-activitybar-active: #ffffff;
+    -ide-activitybar-badge: #007acc;
+
+    /* ── Editor ────────────────────────────────────────── */
+    -ide-editor-bg:      #1e1e1e;
+    -ide-editor-fg:      #d4d4d4;
+    -ide-editor-line:    #282828;
+    -ide-editor-caret:   #aeafad;
+    -ide-gutter-fg:      #858585;
+
+    /* ── Mono font ─────────────────────────────────────── */
+    -ide-font-mono:      "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
+
+    /* ── Spacing scale (4px base) ──────────────────────── */
+    -ide-sp-xxs:  2;
+    -ide-sp-xs:   4;
+    -ide-sp-sm:   6;
+    -ide-sp-md:   8;
+    -ide-sp-lg:   12;
+    -ide-sp-xl:   16;
+    -ide-sp-xxl:  24;
+
+    /* ── Radius ────────────────────────────────────────── */
+    -ide-radius-sm:  2;
+    -ide-radius-md:  4;
+    -ide-radius-lg:  6;
+
+    /* ── Shadow ────────────────────────────────────────── */
+    -ide-shadow:    dropshadow(gaussian, rgba(0,0,0,0.45), 10, 0, 0, 3);
+    -ide-shadow-lg: dropshadow(gaussian, rgba(0,0,0,0.55), 16, 0, 0, 4);
+
+    /* ── Apply root surface ────────────────────────────── */
+    -fx-background-color: -ide-bg-primary;
+    -fx-text-fill: -ide-fg-primary;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   2. MENU BAR & MENUS
+   ═══════════════════════════════════════════════════════════ */
+.menu-bar {
+    -fx-background-color: -ide-bg-tertiary;
+    -fx-padding: 0;
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: -ide-border;
+}
+
+.menu-bar .menu {
+    -fx-padding: 4 8 4 8;
+}
+
+.menu-bar .label {
+    -fx-text-fill: -ide-fg-primary;
+    -fx-font-size: 12px;
+}
+
+.menu-bar .menu:hover,
+.menu-bar .menu:showing {
+    -fx-background-color: -ide-bg-active;
+}
+
+.context-menu {
+    -fx-background-color: -ide-bg-secondary;
+    -fx-border-color: -ide-border-light;
+    -fx-border-width: 1;
+    -fx-padding: 4 0 4 0;
+    -fx-effect: -ide-shadow;
+}
+
+.menu-item {
+    -fx-padding: 4 20 4 20;
+}
+
+.menu-item .label {
+    -fx-text-fill: -ide-fg-primary;
+    -fx-font-size: 12px;
+}
+
+.menu-item:focused {
+    -fx-background-color: -ide-accent;
+}
+
+.menu-item:focused .label {
+    -fx-text-fill: -ide-fg-inverse;
+}
+
+.menu-item:disabled .label {
+    -fx-text-fill: -ide-fg-disabled;
+}
+
+.separator:horizontal .line {
+    -fx-border-color: -ide-border-light;
+    -fx-border-width: 0.5 0 0 0;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   3. SPLIT PANE
+   ═══════════════════════════════════════════════════════════ */
+.split-pane {
+    -fx-background-color: -ide-bg-primary;
+    -fx-padding: 0;
+}
+
+.split-pane-divider {
+    -fx-background-color: -ide-border;
+    -fx-padding: 0 1 0 1;
+}
+
+.split-pane-divider:hover {
+    -fx-background-color: -ide-accent;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   4. TAB PANE — Editor tabs
+   ═══════════════════════════════════════════════════════════ */
+.tab-pane {
+    -fx-background-color: -ide-bg-primary;
+}
+
+.tab-pane > .tab-header-area {
+    -fx-background-color: -ide-bg-secondary;
+    -fx-padding: 0;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab {
+    -fx-background-color: -ide-bg-tertiary;
+    -fx-border-color: transparent -ide-border transparent transparent;
+    -fx-border-width: 0 1 0 0;
+    -fx-padding: 6 14 6 14;
+    -fx-background-insets: 0;
+    -fx-background-radius: 0;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab:selected {
+    -fx-background-color: -ide-bg-primary;
+    -fx-border-color: -ide-accent transparent transparent transparent;
+    -fx-border-width: 2 1 0 0;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab:hover:!selected {
+    -fx-background-color: -ide-bg-active;
+}
+
+.tab .tab-label {
+    -fx-text-fill: -ide-fg-secondary;
+    -fx-font-size: 12px;
+}
+
+.tab:selected .tab-label {
+    -fx-text-fill: -ide-fg-inverse;
+}
+
+.tab-pane > .tab-header-area > .tab-header-background {
+    -fx-background-color: -ide-bg-secondary;
+}
+
+.tab-close-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: transparent;
+    -fx-font-size: 12px;
+    -fx-padding: 0;
+    -fx-border-width: 0;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.tab-close-button:hover {
+    -fx-text-fill: transparent;
+    -fx-background-color: transparent;
+}
+
+/* Tab modification indicator (dirty state) */
+.tab-dirty {
+    -fx-background-color: -ide-bg-active;
+    -fx-border-width: 0 0 2 0;
+    -fx-border-color: -ide-warning;
+}
+
+.tab-dirty .tab-label {
+    -fx-font-weight: bold;
+    -fx-text-fill: -ide-warning;
+}
+
+.tab-dirty:selected {
+    -fx-background-color: -ide-bg-primary;
+    -fx-border-color: -ide-warning transparent transparent transparent;
+    -fx-border-width: 2 1 2 0;
+}
+
+.tab-dirty:selected .tab-label {
+    -fx-text-fill: -ide-warning;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   5. BOTTOM PANEL TABS
+   ═══════════════════════════════════════════════════════════ */
+.bottom-tab-pane > .tab-header-area {
+    -fx-background-color: -ide-bg-secondary;
+}
+
+.bottom-tab-pane > .tab-header-area > .headers-region > .tab {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 4 12 4 12;
+    -fx-background-radius: 0;
+    -fx-background-insets: 0;
+}
+
+.bottom-tab-pane > .tab-header-area > .headers-region > .tab:selected {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent -ide-accent transparent;
+    -fx-border-width: 0 0 2 0;
+}
+
+.bottom-tab-pane .tab .tab-label {
+    -fx-text-fill: -ide-fg-secondary;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.bottom-tab-pane .tab:selected .tab-label {
+    -fx-text-fill: -ide-fg-inverse;
+}
+
+.bottom-tab-pane > .tab-header-area > .tab-header-background {
+    -fx-background-color: -ide-bg-secondary;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   6. ACTIVITY BAR
+   ═══════════════════════════════════════════════════════════ */
+.activity-bar {
+    -fx-background-color: -ide-activitybar-bg;
+    -fx-padding: 4 0 4 0;
+    -fx-border-color: -ide-border;
+    -fx-border-width: 0 1 0 0;
+    -fx-min-width: 48;
+    -fx-pref-width: 48;
+    -fx-max-width: 48;
+}
+
+.activity-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: -ide-activitybar-fg;
+    -fx-font-size: 18px;
+    -fx-min-width: 48;
+    -fx-min-height: 48;
+    -fx-pref-width: 48;
+    -fx-pref-height: 48;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+    -fx-border-width: 0 0 0 2;
+    -fx-border-color: transparent;
+    -fx-alignment: center;
+}
+
+.activity-btn:hover {
+    -fx-text-fill: -ide-fg-primary;
+}
+
+.activity-btn-active {
+    -fx-text-fill: -ide-activitybar-active;
+    -fx-border-color: -ide-activitybar-active;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   7. SIDEBAR
+   ═══════════════════════════════════════════════════════════ */
+.sidebar-header {
+    -fx-background-color: -ide-bg-secondary;
+    -fx-padding: 8 12 8 12;
+    -fx-border-color: -ide-border;
+    -fx-border-width: 0 0 1 0;
+}
+
+.sidebar-header .label {
+    -fx-text-fill: -ide-fg-secondary;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.sidebar-panel {
+    -fx-background-color: -ide-bg-secondary;
+    -fx-border-color: -ide-border;
+    -fx-border-width: 0 1 0 0;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   8. TREE VIEW — Project Explorer
+   ═══════════════════════════════════════════════════════════ */
+.tree-view {
+    -fx-background-color: -ide-bg-secondary;
+    -fx-border-width: 0;
+}
+
+.tree-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: -ide-fg-primary;
+    -fx-padding: 2 4 2 4;
+    -fx-font-size: 12px;
+}
+
+.tree-cell:selected {
+    -fx-background-color: -ide-bg-selection;
+    -fx-text-fill: -ide-fg-inverse;
+}
+
+.tree-cell:hover:!selected {
+    -fx-background-color: -ide-bg-hover;
+}
+
+.tree-cell:empty {
+    -fx-background-color: transparent;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   9. SCROLL BARS — Slim, VSCode-style
+   ═══════════════════════════════════════════════════════════ */
+.scroll-bar {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar:vertical {
+    -fx-pref-width: 10;
+}
+
+.scroll-bar:horizontal {
+    -fx-pref-height: 10;
+}
+
+.scroll-bar .track {
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: rgba(121, 121, 121, 0.4);
+    -fx-background-radius: 0;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: rgba(121, 121, 121, 0.7);
+}
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.scroll-bar .increment-arrow,
+.scroll-bar .decrement-arrow {
+    -fx-shape: " ";
+    -fx-padding: 0;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   10. BUTTONS
+   ═══════════════════════════════════════════════════════════ */
+.button {
+    -fx-background-color: -ide-bg-input;
+    -fx-text-fill: -ide-fg-primary;
+    -fx-border-color: -ide-border-light;
+    -fx-border-width: 1;
+    -fx-border-radius: 2;
+    -fx-background-radius: 2;
+    -fx-padding: 4 12 4 12;
+    -fx-font-size: 12px;
+    -fx-cursor: hand;
+}
+
+.button:hover {
+    -fx-background-color: -ide-bg-active;
+    -fx-border-color: #666666;
+}
+
+.button:pressed {
+    -fx-background-color: -ide-bg-tertiary;
+}
+
+.button:disabled {
+    -fx-opacity: 0.5;
+}
+
+.button-primary {
+    -fx-background-color: -ide-accent;
+    -fx-text-fill: -ide-fg-inverse;
+    -fx-border-color: -ide-accent;
+}
+
+.button-primary:hover {
+    -fx-background-color: -ide-accent-hover;
+    -fx-border-color: -ide-accent-hover;
+}
+
+.button-primary:pressed {
+    -fx-background-color: -ide-accent-pressed;
+}
+
+.button-danger {
+    -fx-background-color: -ide-danger;
+    -fx-text-fill: -ide-fg-inverse;
+    -fx-border-color: #a93226;
+}
+
+.button-danger:hover {
+    -fx-background-color: -ide-danger-hover;
+    -fx-border-color: -ide-danger;
+}
+
+.button-success {
+    -fx-background-color: -ide-success;
+    -fx-text-fill: -ide-fg-inverse;
+    -fx-border-color: #219a52;
+}
+
+.button-success:hover {
+    -fx-background-color: -ide-success-hover;
+    -fx-border-color: -ide-success;
+}
+
+.button-icon {
+    -fx-background-color: transparent;
+    -fx-text-fill: -ide-fg-secondary;
+    -fx-border-width: 0;
+    -fx-padding: 4 6 4 6;
+    -fx-cursor: hand;
+}
+
+.button-icon:hover {
+    -fx-background-color: -ide-bg-hover;
+    -fx-text-fill: -ide-fg-primary;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   11. TEXT FIELDS & INPUTS
+   ═══════════════════════════════════════════════════════════ */
+.text-field {
+    -fx-background-color: -ide-bg-input;
+    -fx-text-fill: -ide-fg-primary;
+    -fx-border-color: -ide-border-light;
+    -fx-border-width: 1;
+    -fx-border-radius: 2;
+    -fx-background-radius: 2;
+    -fx-padding: 4 8 4 8;
+    -fx-prompt-text-fill: -ide-fg-muted;
+    -fx-font-size: 12px;
+}
+
+.text-field:focused {
+    -fx-border-color: -ide-accent;
+}
+
+.text-area {
+    -fx-control-inner-background: -ide-bg-primary;
+    -fx-text-fill: -ide-editor-fg;
+    -fx-font-family: -ide-font-mono;
+    -fx-font-size: 14px;
+    -fx-highlight-fill: -ide-bg-selection;
+    -fx-highlight-text-fill: -ide-fg-inverse;
+    -fx-border-width: 0;
+    -fx-padding: 8;
+}
+
+.text-area .scroll-pane,
+.text-area .content {
+    -fx-background-color: -ide-bg-primary;
+}
+
+.combo-box {
+    -fx-background-color: -ide-bg-input;
+    -fx-border-color: -ide-border-light;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+}
+
+.combo-box .list-cell {
+    -fx-text-fill: -ide-fg-primary;
+    -fx-font-size: 12px;
+}
+
+.combo-box-popup .list-view {
+    -fx-background-color: -ide-bg-secondary;
+}
+
+.combo-box-popup .list-cell:hover {
+    -fx-background-color: -ide-bg-hover;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   12. LABELS
+   ═══════════════════════════════════════════════════════════ */
+.label {
+    -fx-text-fill: -ide-fg-primary;
+}
+
+.label-secondary {
+    -fx-text-fill: -ide-fg-secondary;
+    -fx-font-size: 11px;
+}
+
+.label-muted {
+    -fx-text-fill: -ide-fg-muted;
+    -fx-font-size: 11px;
+}
+
+.section-title {
+    -fx-text-fill: -ide-fg-primary;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   13. STATUS BAR
+   ═══════════════════════════════════════════════════════════ */
+.status-bar {
+    -fx-background-color: -ide-statusbar-bg;
+    -fx-padding: 0 10 0 10;
+    -fx-min-height: 24;
+    -fx-max-height: 24;
+}
+
+.status-bar .label,
+.status-bar .status-bar-item {
+    -fx-text-fill: -ide-statusbar-fg;
+    -fx-font-size: 11px;
+}
+
+.status-bar-item {
+    -fx-padding: 0 8 0 8;
+}
+
+.status-bar-separator {
+    -fx-border-color: rgba(255, 255, 255, 0.3);
+    -fx-border-width: 0 0.5 0 0;
+    -fx-padding: 2 0 2 0;
+}
+
+/* Connection status dot */
+.connection-dot {
+    -fx-stroke: transparent;
+    -fx-stroke-width: 0;
+}
+.connection-connected { -fx-fill: #4caf50; }
+.connection-connecting { -fx-fill: #ff9800; }
+.connection-disconnected { -fx-fill: #757575; }
+.connection-error { -fx-fill: #f44336; }
+
+/* Status notification (auto-fade) */
+.status-notification {
+    -fx-text-fill: -ide-accent;
+    -fx-font-weight: bold;
+}
+
+/* Save in progress notification */
+.status-notification-saving {
+    -fx-text-fill: -ide-warning;
+    -fx-font-weight: bold;
+}
+
+/* Save error notification */
+.status-notification-error {
+    -fx-text-fill: -ide-danger;
+    -fx-font-weight: bold;
+}
+
+/* Spinner animation for save state */
+.spinner {
+    -fx-animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+    0% { -fx-rotate: 0deg; }
+    100% { -fx-rotate: 360deg; }
+}
+
+/* Drag-over highlight for tree cells */
+.drag-over {
+    -fx-background-color: -ide-bg-drop;
+    -fx-border-color: -ide-accent;
+    -fx-border-width: 0 0 2 0;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   14. TABLE VIEW — Diagnostics / Problems
+   ═══════════════════════════════════════════════════════════ */
+.table-view {
+    -fx-background-color: -ide-bg-primary;
+    -fx-border-width: 0;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: -ide-bg-secondary;
+}
+
+.table-view .column-header {
+    -fx-background-color: -ide-bg-secondary;
+    -fx-border-color: -ide-border;
+    -fx-border-width: 0 1 1 0;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: -ide-fg-primary;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.table-row-cell {
+    -fx-background-color: -ide-bg-primary;
+    -fx-border-color: -ide-bg-tertiary;
+    -fx-border-width: 0 0 0.5 0;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: -ide-bg-selection;
+}
+
+.table-row-cell .text {
+    -fx-fill: -ide-fg-primary;
+}
+
+.table-row-cell:selected .text {
+    -fx-fill: -ide-fg-inverse;
+}
+
+.table-row-cell:empty {
+    -fx-background-color: -ide-bg-primary;
+    -fx-border-color: transparent;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   15. LIST VIEW
+   ═══════════════════════════════════════════════════════════ */
+.list-view {
+    -fx-background-color: -ide-bg-secondary;
+    -fx-border-width: 0;
+}
+
+.list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: -ide-fg-primary;
+    -fx-padding: 4 8 4 8;
+}
+
+.list-cell:selected {
+    -fx-background-color: -ide-bg-selection;
+    -fx-text-fill: -ide-fg-inverse;
+}
+
+.list-cell:hover:!selected {
+    -fx-background-color: -ide-bg-hover;
+}
+
+.list-cell:empty {
+    -fx-background-color: transparent;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   16. TOOLTIP
+   ═══════════════════════════════════════════════════════════ */
+.tooltip {
+    -fx-background-color: -ide-bg-elevated;
+    -fx-text-fill: -ide-fg-primary;
+    -fx-border-color: -ide-border-light;
+    -fx-border-width: 1;
+    -fx-font-size: 12px;
+    -fx-padding: 4 8 4 8;
+    -fx-effect: -ide-shadow;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   17. DIALOGS
+   ═══════════════════════════════════════════════════════════ */
+.dialog-pane {
+    -fx-background-color: -ide-bg-secondary;
+}
+
+.dialog-pane > .content {
+    -fx-background-color: -ide-bg-secondary;
+}
+
+.dialog-pane .label {
+    -fx-text-fill: -ide-fg-primary;
+}
+
+.dialog-pane > .button-bar > .container > .button {
+    -fx-background-color: -ide-bg-input;
+    -fx-text-fill: -ide-fg-primary;
+    -fx-border-color: -ide-border-light;
+    -fx-border-width: 1;
+}
+
+.dialog-pane .header-panel {
+    -fx-background-color: -ide-bg-tertiary;
+}
+
+.dialog-pane .header-panel .label {
+    -fx-text-fill: -ide-fg-primary;
+    -fx-font-size: 14px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   18. CHECKBOXES & RADIO
+   ═══════════════════════════════════════════════════════════ */
+.radio-button {
+    -fx-text-fill: -ide-fg-primary;
+}
+.radio-button .radio {
+    -fx-background-color: -ide-bg-input;
+    -fx-border-color: #666666;
+}
+.radio-button:selected .radio {
+    -fx-border-color: -ide-accent;
+}
+.radio-button:selected .dot {
+    -fx-background-color: -ide-accent;
+}
+
+.check-box {
+    -fx-text-fill: -ide-fg-primary;
+}
+.check-box .box {
+    -fx-background-color: -ide-bg-input;
+    -fx-border-color: #666666;
+}
+.check-box:selected .box {
+    -fx-background-color: -ide-accent;
+    -fx-border-color: -ide-accent;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   19. CODE EDITOR (RichTextFX)
+   ═══════════════════════════════════════════════════════════ */
+.code-editor {
+    -fx-background-color: -ide-editor-bg;
+    -fx-font-family: -ide-font-mono;
+    -fx-font-size: 14px;
+}
+
+.code-editor .text {
+    -fx-fill: -ide-editor-fg;
+}
+
+.code-editor .paragraph-box:has-caret {
+    -fx-background-color: -ide-editor-line;
+}
+
+.code-editor .caret {
+    -fx-stroke: -ide-editor-caret;
+}
+
+.code-editor .selection {
+    -fx-fill: -ide-bg-selection;
+}
+
+.line-number {
+    -fx-font-family: -ide-font-mono;
+    -fx-font-size: 12px;
+    -fx-text-fill: -ide-gutter-fg;
+    -fx-background-color: -ide-editor-bg;
+    -fx-padding: 0 8 0 0;
+}
+
+.line-error {
+    -fx-background-color: -ide-danger-bg;
+    -fx-text-fill: -ide-danger;
+}
+
+.line-warning {
+    -fx-background-color: -ide-warning-bg;
+    -fx-text-fill: -ide-warning;
+}
+
+.code-editor-minimap {
+    -fx-background-color: -ide-bg-elevated;
+    -fx-font-size: 2px;
+    -fx-opacity: 0.7;
+}
+
+/* ── Syntax highlighting tokens (8 distinct colors) ───── */
+.keyword     { -fx-fill: #569cd6 !important; -fx-font-weight: bold !important; }  /* 1 — blue */
+.type        { -fx-fill: #4ec9b0 !important; }                          /* 2 — teal (primitives/builtins) */
+.annotation  { -fx-fill: #dcdcaa !important; }                          /* 3 — yellow-gold (decorators) */
+.string      { -fx-fill: #ce9178 !important; }                          /* 4 — orange */
+.number      { -fx-fill: #b5cea8 !important; }                          /* 5 — light green */
+.comment     { -fx-fill: #6a9955 !important; -fx-font-style: italic !important; }  /* 6 — green italic */
+.method      { -fx-fill: #dcdcaa !important; }                          /* 7 — yellow (function calls) */
+.classname   { -fx-fill: #4fc1ff !important; }                          /* 8 — cyan (class/type names) */
+
+/* ── Syntax error underline ───────────────────────────── */
+.error-underline {
+    -rtfx-underline-color: #f44747;
+    -rtfx-underline-width: 1.5;
+}
+.warning-underline {
+    -rtfx-underline-color: #cca700;
+    -rtfx-underline-width: 1.0;
+}
+.error-tooltip {
+    -fx-background-color: #452828;
+    -fx-text-fill: #f44747;
+    -fx-font-size: 12px;
+    -fx-padding: 6 10;
+    -fx-border-color: #f44747;
+    -fx-border-width: 1;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+}
+
+/* ── Remote collaboration cursors ──────────────────────── */
+.remote-cursor-line {
+    -fx-background-color: rgba(0, 188, 212, 0.08);
+}
+.remote-selection {
+    -fx-background-color: rgba(0, 188, 212, 0.15);
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   20. COLLABORATION PANEL
+   ═══════════════════════════════════════════════════════════ */
+.collab-panel {
+    -fx-background-color: -ide-bg-secondary;
+    -fx-border-color: -ide-border;
+    -fx-border-width: 0 0 0 1;
+    -fx-padding: 10;
+}
+
+.collab-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -ide-fg-primary;
+}
+
+.collab-status-connected {
+    -fx-text-fill: -ide-success;
+    -fx-font-size: 11px;
+}
+
+.collab-status-disconnected {
+    -fx-text-fill: -ide-danger;
+    -fx-font-size: 11px;
+}
+
+.collab-role {
+    -fx-text-fill: -ide-fg-secondary;
+    -fx-font-size: 11px;
+}
+
+.collab-token {
+    -fx-text-fill: -ide-fg-muted;
+    -fx-font-size: 10px;
+}
+
+.collab-section-label {
+    -fx-text-fill: -ide-fg-secondary;
+    -fx-font-size: 11px;
+}
+
+.collab-client-name {
+    -fx-text-fill: -ide-fg-primary;
+    -fx-font-size: 11px;
+}
+
+.collab-client-role {
+    -fx-text-fill: #ffd700;
+    -fx-font-size: 11px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   21. TERMINAL
+   ═══════════════════════════════════════════════════════════ */
+.terminal-output {
+    -fx-background-color: #0c0c0c;
+    -fx-font-family: -ide-font-mono;
+    -fx-font-size: 12px;
+}
+
+.terminal-scroll {
+    -fx-background-color: #0c0c0c;
+}
+
+.terminal-scroll .viewport {
+    -fx-background-color: #0c0c0c;
+}
+
+.terminal-input {
+    -fx-background-color: -ide-bg-input;
+    -fx-text-fill: -ide-fg-primary;
+    -fx-border-color: -ide-border-light;
+    -fx-border-radius: 2;
+    -fx-background-radius: 2;
+    -fx-font-family: -ide-font-mono;
+    -fx-font-size: 12px;
+    -fx-prompt-text-fill: -ide-fg-muted;
+}
+
+.terminal-input:focused {
+    -fx-border-color: -ide-accent;
+}
+
+.terminal-toolbar {
+    -fx-background-color: -ide-bg-secondary;
+    -fx-border-color: -ide-border;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 3 8 3 8;
+}
+
+.terminal-status {
+    -fx-font-size: 12px;
+}
+
+.terminal-status-connected {
+    -fx-text-fill: -ide-success;
+}
+
+.terminal-status-disconnected {
+    -fx-text-fill: -ide-fg-muted;
+}
+
+.terminal-status-error {
+    -fx-text-fill: -ide-danger;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   22. OUTPUT PANEL
+   ═══════════════════════════════════════════════════════════ */
+.output-area {
+    -fx-control-inner-background: -ide-bg-primary;
+    -fx-text-fill: -ide-fg-primary;
+    -fx-font-family: -ide-font-mono;
+    -fx-font-size: 12px;
+    -fx-border-width: 0;
+}
+
+.output-toolbar {
+    -fx-background-color: -ide-bg-secondary;
+    -fx-border-color: -ide-border;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 3 8 3 8;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   23. CHAT
+   ═══════════════════════════════════════════════════════════ */
+.chat-panel {
+    -fx-background-color: -ide-bg-primary;
+}
+.chat-messages {
+    -fx-background-color: -ide-bg-primary;
+}
+.chat-scroll {
+    -fx-background-color: -ide-bg-primary;
+}
+.chat-scroll .viewport {
+    -fx-background-color: -ide-bg-primary;
+}
+.chat-input-bar {
+    -fx-background-color: -ide-bg-secondary;
+    -fx-border-color: -ide-border;
+    -fx-border-width: 1 0 0 0;
+}
+.chat-input {
+    -fx-background-color: -ide-bg-input;
+    -fx-text-fill: -ide-fg-primary;
+    -fx-border-color: -ide-border-light;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+    -fx-prompt-text-fill: -ide-fg-muted;
+}
+.chat-send-btn {
+    -fx-background-color: -ide-accent;
+    -fx-text-fill: -ide-fg-inverse;
+    -fx-padding: 4 12;
+    -fx-cursor: hand;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+}
+.chat-send-btn:hover {
+    -fx-background-color: -ide-accent-hover;
+}
+.chat-time {
+    -fx-fill: -ide-fg-muted;
+    -fx-font-size: 10px;
+}
+.chat-name-own {
+    -fx-fill: #569cd6;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+.chat-name-other {
+    -fx-fill: -ide-success;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+.chat-message-text {
+    -fx-fill: -ide-fg-primary;
+    -fx-font-size: 12px;
+}
+.chat-bubble-own {
+    -fx-background-color: -ide-accent-subtle;
+    -fx-background-radius: 4;
+}
+.chat-bubble-other {
+    -fx-background-color: transparent;
+}
+.chat-bubble-system {
+    -fx-background-color: transparent;
+}
+.chat-system {
+    -fx-fill: -ide-gutter-fg;
+    -fx-font-size: 10px;
+    -fx-font-style: italic;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   24. GIT PANEL
+   ═══════════════════════════════════════════════════════════ */
+.git-panel {
+    -fx-background-color: -ide-bg-primary;
+}
+.git-toolbar {
+    -fx-background-color: -ide-bg-secondary;
+    -fx-border-color: -ide-border;
+    -fx-border-width: 0 0 1 0;
+}
+.git-toolbar-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: -ide-fg-primary;
+    -fx-padding: 3 8;
+    -fx-cursor: hand;
+}
+.git-toolbar-btn:hover {
+    -fx-background-color: -ide-bg-input;
+}
+.git-section-title {
+    -fx-text-fill: -ide-fg-primary;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+.git-branch-combo {
+    -fx-background-color: -ide-bg-input;
+    -fx-border-color: -ide-border-light;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+}
+.git-changes-list {
+    -fx-background-color: -ide-bg-primary;
+    -fx-font-family: -ide-font-mono;
+    -fx-font-size: 12px;
+}
+.git-changes-list .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: -ide-fg-primary;
+    -fx-padding: 2 8;
+}
+.git-changes-list .list-cell:selected {
+    -fx-background-color: -ide-bg-selection;
+}
+.git-added     { -fx-text-fill: #73c991; }
+.git-modified  { -fx-text-fill: #e2c08d; }
+.git-deleted   { -fx-text-fill: #c74e39; }
+.git-untracked { -fx-text-fill: -ide-gutter-fg; }
+.git-conflict  { -fx-text-fill: #e51400; }
+.git-commit-input {
+    -fx-background-color: -ide-bg-input;
+    -fx-text-fill: -ide-fg-primary;
+    -fx-border-color: -ide-border-light;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+    -fx-font-size: 12px;
+}
+.git-action-btn {
+    -fx-background-color: -ide-bg-input;
+    -fx-text-fill: -ide-fg-primary;
+    -fx-padding: 4 12;
+    -fx-cursor: hand;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+}
+.git-action-btn:hover {
+    -fx-background-color: -ide-bg-active;
+}
+.git-commit-btn {
+    -fx-background-color: -ide-accent;
+    -fx-text-fill: -ide-fg-inverse;
+}
+.git-commit-btn:hover {
+    -fx-background-color: -ide-accent-hover;
+}
+.git-diff-viewer {
+    -fx-font-family: -ide-font-mono;
+    -fx-font-size: 12px;
+}
+.git-diff-scroll {
+    -fx-background-color: -ide-bg-primary;
+}
+.git-diff-add     { -fx-fill: #73c991; }
+.git-diff-remove  { -fx-fill: #c74e39; }
+.git-diff-hunk    { -fx-fill: #569cd6; }
+.git-diff-header  { -fx-fill: -ide-gutter-fg; }
+.git-diff-context { -fx-fill: -ide-fg-primary; }
+.git-diff-empty   { -fx-fill: -ide-gutter-fg; -fx-font-style: italic; }
+.git-history-list {
+    -fx-background-color: -ide-bg-primary;
+    -fx-font-size: 11px;
+}
+.git-history-list .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: -ide-fg-primary;
+    -fx-padding: 2 8;
+}
+.git-history-list .list-cell:selected {
+    -fx-background-color: -ide-bg-selection;
+}
+.git-status-label {
+    -fx-text-fill: -ide-gutter-fg;
+    -fx-font-size: 11px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   25. QUICK OPEN & COMMAND PALETTE
+   ═══════════════════════════════════════════════════════════ */
+.quick-open-container {
+    -fx-background-color: -ide-bg-secondary;
+    -fx-border-color: -ide-accent;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-effect: -ide-shadow-lg;
+    -fx-padding: 4;
+}
+
+.quick-open-search {
+    -fx-background-color: -ide-bg-input;
+    -fx-text-fill: -ide-fg-primary;
+    -fx-border-color: -ide-border-light;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+    -fx-font-size: 14px;
+    -fx-padding: 8 12 8 12;
+    -fx-prompt-text-fill: -ide-fg-muted;
+}
+
+.quick-open-search:focused {
+    -fx-border-color: -ide-accent;
+}
+
+.quick-open-list {
+    -fx-background-color: -ide-bg-secondary;
+}
+
+.quick-open-list .list-cell {
+    -fx-text-fill: -ide-fg-primary;
+    -fx-font-size: 12px;
+    -fx-padding: 4 8;
+}
+
+.quick-open-list .list-cell:selected {
+    -fx-background-color: -ide-accent;
+    -fx-text-fill: -ide-fg-inverse;
+}
+
+.command-palette-container {
+    -fx-background-color: -ide-bg-secondary;
+    -fx-border-color: -ide-accent;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-effect: -ide-shadow-lg;
+    -fx-padding: 4;
+}
+
+.command-palette-search {
+    -fx-background-color: -ide-bg-input;
+    -fx-text-fill: -ide-fg-primary;
+    -fx-border-color: -ide-border-light;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+    -fx-font-size: 14px;
+    -fx-padding: 8 12 8 12;
+    -fx-prompt-text-fill: -ide-fg-muted;
+}
+
+.command-palette-list {
+    -fx-background-color: -ide-bg-secondary;
+}
+
+.command-palette-list .list-cell {
+    -fx-text-fill: -ide-fg-primary;
+    -fx-padding: 4 8;
+}
+
+.command-palette-list .list-cell:selected {
+    -fx-background-color: -ide-accent;
+    -fx-text-fill: -ide-fg-inverse;
+}
+
+.cmd-category {
+    -fx-text-fill: -ide-fg-secondary;
+    -fx-font-size: 10px;
+}
+
+.cmd-shortcut {
+    -fx-text-fill: -ide-fg-muted;
+    -fx-font-size: 10px;
+    -fx-font-family: -ide-font-mono;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   26. GLOBAL SEARCH
+   ═══════════════════════════════════════════════════════════ */
+.global-search-panel {
+    -fx-background-color: -ide-bg-primary;
+}
+
+.global-search-input {
+    -fx-background-color: -ide-bg-input;
+    -fx-text-fill: -ide-fg-primary;
+    -fx-border-color: -ide-border-light;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+    -fx-prompt-text-fill: -ide-fg-muted;
+    -fx-font-size: 13px;
+    -fx-padding: 6 10 6 10;
+}
+
+.global-search-input:focused {
+    -fx-border-color: -ide-accent;
+}
+
+.global-search-results {
+    -fx-background-color: -ide-bg-primary;
+}
+
+.global-search-status {
+    -fx-text-fill: -ide-fg-secondary;
+    -fx-font-size: 11px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   27. INLINE FIND BAR
+   ═══════════════════════════════════════════════════════════ */
+.find-bar {
+    -fx-background-color: -ide-bg-elevated;
+    -fx-border-color: -ide-border;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 4 8 4 8;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 4, 0, 0, 2);
+}
+
+.find-bar .text-field {
+    -fx-font-size: 13px;
+    -fx-padding: 4 8 4 8;
+    -fx-min-width: 200;
+}
+
+.find-bar .label {
+    -fx-text-fill: -ide-fg-secondary;
+    -fx-font-size: 11px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   28. NOTIFICATION TOAST
+   ═══════════════════════════════════════════════════════════ */
+.notification-toast {
+    -fx-background-color: -ide-bg-elevated;
+    -fx-border-color: -ide-border-light;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 8 14 8 14;
+    -fx-effect: -ide-shadow;
+}
+
+.notification-toast .label {
+    -fx-text-fill: -ide-fg-primary;
+    -fx-font-size: 12px;
+}
+
+.notification-info {
+    -fx-border-color: -ide-info;
+    -fx-border-width: 0 0 0 3;
+}
+
+.notification-success {
+    -fx-border-color: -ide-success;
+    -fx-border-width: 0 0 0 3;
+}
+
+.notification-warning {
+    -fx-border-color: -ide-warning;
+    -fx-border-width: 0 0 0 3;
+}
+
+.notification-error {
+    -fx-border-color: -ide-danger;
+    -fx-border-width: 0 0 0 3;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   29. VIDEO CALL
+   ═══════════════════════════════════════════════════════════ */
+.video-call-view {
+    -fx-background-color: -ide-bg-primary;
+}
+.remote-video-pane {
+    -fx-background-color: -ide-bg-secondary;
+    -fx-border-color: -ide-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+}
+.local-video-pane {
+    -fx-background-color: -ide-bg-tertiary;
+    -fx-border-color: -ide-border-light;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+}
+.video-controls {
+    -fx-background-color: -ide-bg-secondary;
+    -fx-border-color: -ide-border;
+    -fx-border-width: 1 0 0 0;
+}
+.video-control-btn {
+    -fx-background-color: -ide-accent;
+    -fx-text-fill: -ide-fg-inverse;
+    -fx-padding: 8 16;
+    -fx-cursor: hand;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-font-size: 12px;
+}
+.video-control-btn:hover {
+    -fx-background-color: -ide-accent-hover;
+}
+.hangup-btn {
+    -fx-background-color: #c72e2e;
+}
+.hangup-btn:hover {
+    -fx-background-color: #e04343;
+}
+.video-status-label {
+    -fx-text-fill: -ide-fg-primary;
+    -fx-font-size: 12px;
+    -fx-padding: 4;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   30. INLINE FIND BAR
+   ═══════════════════════════════════════════════════════════ */
+.inline-find-bar {
+    -fx-background-color: -ide-bg-elevated;
+    -fx-border-color: -ide-border;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 4 8;
+}
+.inline-find-field {
+    -fx-background-color: -ide-input-bg;
+    -fx-text-fill: -ide-fg-primary;
+    -fx-border-color: -ide-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 2;
+    -fx-background-radius: 2;
+    -fx-padding: 3 6;
+    -fx-font-size: 12px;
+}
+.inline-find-field:focused {
+    -fx-border-color: -ide-accent;
+}
+.inline-find-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: -ide-fg-secondary;
+    -fx-padding: 2 6;
+    -fx-cursor: hand;
+    -fx-border-radius: 2;
+    -fx-background-radius: 2;
+    -fx-font-size: 12px;
+}
+.inline-find-btn:hover {
+    -fx-background-color: -ide-bg-hover;
+}
+.inline-find-count {
+    -fx-text-fill: -ide-fg-muted;
+    -fx-font-size: 11px;
+    -fx-padding: 0 4;
+}
+.inline-find-option {
+    -fx-text-fill: -ide-fg-secondary;
+    -fx-font-size: 11px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   31. PLUGIN SETTINGS
+   ═══════════════════════════════════════════════════════════ */
+.plugin-state-enabled  { -fx-text-fill: -ide-success; }
+.plugin-state-disabled { -fx-text-fill: -ide-fg-muted; }
+.plugin-state-error    { -fx-text-fill: -ide-danger; }
+
+
+/* ═══════════════════════════════════════════════════════════
+   31. EDITOR TAB PANE — dirty indicator
+   ═══════════════════════════════════════════════════════════ */
+.editor-tab-pane .tab .tab-label {
+    -fx-font-size: 12px;
+}
+
+.editor-tab-pane .tab:selected .tab-label {
+    -fx-text-fill: -ide-fg-inverse;
+}

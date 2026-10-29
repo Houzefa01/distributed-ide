@@ -1,0 +1,12 @@
+{
+  "id": "my-example-plugin",
+  "name": "Example Plugin",
+  "version": "1.0.0",
+  "description": "An example plugin demonstrating the plugin API",
+  "author": "Plugin Developer",
+  "mainClass": "com.example.MyPlugin",
+  "minIdeVersion": "1.0.0",
+  "maxIdeVersion": null,
+  "website": "https://example.com/my-plugin",
+  "license": "MIT"
+}

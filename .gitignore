@@ -1,0 +1,36 @@
+# Maven
+target/
+*.jar
+*.war
+*.ear
+dependency-reduced-pom.xml
+.classpath
+.project
+.settings/
+*.log
+
+# IDEs
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+*.code-workspace
+.DS_Store
+
+# Build
+build/
+dist/
+bin/
+
+# IDE-specific
+.metadata/
+.recommenders/
+RemoteSystemsTempFiles/
+*.swp
+*.swo
+*~
+
+# Java
+*.class
+.gradle
